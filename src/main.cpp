@@ -23,9 +23,10 @@ const char *vertexShaderSource = "#version 330 core\n"
                                  "}\0";
 const char *fragmentShaderSource = "#version 330 core\n"
                                    "out vec4 FragColor;\n"
+                                   "uniform vec4 color;\n"
                                    "void main()\n"
                                    "{\n"
-                                   "   FragColor =vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+                                   "   FragColor = color;\n"
                                    "}\n\0";
 
 void setupImGuiWindows() {
@@ -77,6 +78,18 @@ void setupImGuiWindows() {
     }
 }
 
+static void HelpMarker(const char* desc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
 
 int main()
 {
@@ -242,8 +255,11 @@ int main()
     bool draw = true;
 
     float scale = 1.0f;
+    ImVec4 color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
     glUseProgram(shaderProgram);
     glUniform1f(glGetUniformLocation(shaderProgram, "scale"), scale);
+    glUseProgram(shaderProgram);
+    glUniform4f(glGetUniformLocation(shaderProgram, "color"), color.x, color.y, color.z, color.w);
 
     // render loop
     // -----------
@@ -300,11 +316,18 @@ int main()
         ImGui::Text("Application average (%.0f FPS)", ImGui::GetIO().Framerate);
         ImGui::End();
 
+//        ImGui::ShowDemoWindow(&show_demo_window);
+
         ImGui::Begin("Geometry Manager");
         ImGui::Text("click to draw geometry!");
         ImGui::Checkbox("Click here", &draw);
         ImGui::Text("click to draw geometry!");
         ImGui::SliderFloat("Scale", &scale, -10.0f, 10.0f);
+        ImGui::Text("Color widget:");
+        ImGui::SameLine(); HelpMarker(
+                "Click on the color square to open a color picker.\n"
+                "CTRL+click on individual component to input value.\n");
+        ImGui::ColorEdit3("Mesh color", (float*)&color);
         ImGui::End();
 
         ImGui::Begin("Events");
@@ -342,6 +365,9 @@ int main()
 
         glUseProgram(shaderProgram);
         glUniform1f(glGetUniformLocation(shaderProgram, "scale"), scale);
+
+        glUseProgram(shaderProgram);
+        glUniform4f(glGetUniformLocation(shaderProgram, "color"), color.x, color.y, color.z, color.w);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
