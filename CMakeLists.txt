@@ -29,7 +29,7 @@ add_executable(forge
         external/imgui/imgui_impl_opengl3.cpp
         external/imgui/imgui_impl_win32.h
         external/imgui/imgui_impl_win32.cpp
-        )
+        src/utils/imgui-layer/ImGuiLayer.cpp src/utils/imgui-layer/ImGuiLayer.h src/utils/shader-manager/Shader.cpp src/utils/shader-manager/Shader.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")
