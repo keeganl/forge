@@ -2,9 +2,9 @@
 // Created by keega on 6/5/2021.
 //
 
-#include "ImGuiLayer.h"
+#include "GuiLayer.h"
 
-void ImGuiLayer::createContext(GLFWwindow *window) {
+void GuiLayer::createContext(GLFWwindow *window) {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -110,7 +110,14 @@ void ImGuiLayer::createContext(GLFWwindow *window) {
 
 }
 
-void ImGuiLayer::createDockspace() {
+void GuiLayer::startFrame() {
+// Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+void GuiLayer::createDockspace() {
     // Create the docking environment
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
@@ -131,5 +138,11 @@ void ImGuiLayer::createDockspace() {
     ImGuiID dockSpaceId = ImGui::GetID("InvisibleWindowDockSpace");
 
     ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+    ImGui::End();
+}
+
+void GuiLayer::createPerformanceWindow() {
+    ImGui::Begin("Performance window");
+    ImGui::Text("Application average (%.0f FPS)", ImGui::GetIO().Framerate);
     ImGui::End();
 }
