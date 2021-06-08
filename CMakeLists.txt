@@ -29,13 +29,19 @@ add_executable(forge
         external/imgui/imgui_impl_opengl3.cpp
         external/imgui/imgui_impl_win32.h
         external/imgui/imgui_impl_win32.cpp
-        src/utils/imgui-layer/ImGuiLayer.cpp src/utils/imgui-layer/ImGuiLayer.h src/utils/shader-manager/Shader.cpp src/utils/shader-manager/Shader.h external/stb/stb_image.h)
+        external/stb/stb_image.h
+        src/utils/imgui-layer/GuiLayer.cpp
+        src/utils/imgui-layer/GuiLayer.h
+        src/utils/shader-manager/Shader.cpp
+        src/utils/shader-manager/Shader.h
+        src/camera/Camera.h src/camera/Camera.cpp)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")
 target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
 target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glm" "glm")
 target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
 
-target_link_libraries(forge glfw ${GLFW_LIBRARIES})
+target_link_libraries(forge glfw ${GLFW_LIBRARIES} glm)
 
