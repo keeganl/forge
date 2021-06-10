@@ -8,6 +8,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glfw" "glfw")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/assimp" "assimp")
 
 
 add_executable(forge
@@ -34,7 +35,12 @@ add_executable(forge
         src/utils/imgui-layer/GuiLayer.h
         src/utils/shader-manager/Shader.cpp
         src/utils/shader-manager/Shader.h
-        src/camera/Camera.h src/camera/Camera.cpp)
+        src/camera/Camera.h
+        src/camera/Camera.cpp
+        src/mesh/helpers/Vertex.h
+        src/mesh/helpers/Texture.h
+        src/mesh/Mesh.h
+        src/mesh/Mesh.cpp src/renderer/Renderer.cpp src/renderer/Renderer.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")
@@ -43,5 +49,5 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glm" "glm")
 target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
 
-target_link_libraries(forge glfw ${GLFW_LIBRARIES} glm)
+target_link_libraries(forge glfw ${GLFW_LIBRARIES} glm assimp)
 
