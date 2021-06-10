@@ -3,8 +3,11 @@
 #include "../external/imgui/imgui_impl_opengl3.h"
 #include "../external/imgui/imgui_internal.h"
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "../external/stb/stb_image.h"
+
+#include <assimp/Importer.hpp>      // C++ importer interface
+#include <assimp/scene.h>           // Output data structure
+#include <assimp/postprocess.h>     // Post processing flags
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -105,6 +108,33 @@ bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_wid
     *out_width = image_width;
     *out_height = image_height;
 
+    return true;
+}
+
+bool DoTheImportThing( const std::string& pFile) {
+    // Create an instance of the Importer class
+    Assimp::Importer importer;
+
+    // And have it read the given file with some example postprocessing
+    // Usually - if speed is not the most important aspect for you - you'll
+    // probably to request more postprocessing than we do in this example.
+    const aiScene* scene = importer.ReadFile( pFile,
+                                              aiProcess_CalcTangentSpace       |
+                                              aiProcess_Triangulate            |
+                                              aiProcess_JoinIdenticalVertices  |
+                                              aiProcess_SortByPType);
+
+    // If the import failed, report it
+    if( !scene) {
+        std::cout << importer.GetErrorString() << std::endl;
+        return false;
+    }
+
+    // Now we can access the file's contents.
+//    DoTheSceneProcessing( scene);
+    std::cout << scene->mMeshes[0] << std::endl;
+
+    // We're done. Everything will be cleaned up by the importer destructor
     return true;
 }
 
@@ -219,6 +249,7 @@ int main()
             1.0f,  1.0f,  1.0f, 1.0f
     };
 
+    DoTheImportThing("../assets/models/link.obj");
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
