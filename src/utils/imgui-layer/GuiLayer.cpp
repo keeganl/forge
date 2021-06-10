@@ -14,7 +14,8 @@ void GuiLayer::createContext(GLFWwindow *window) {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
     io.ConfigFlags |= ImGuiWindowFlags_MenuBar;
-    io.ConfigFlags |= ImGuiDockNodeFlags_PassthruCentralNode;
+    // not setting the PassthruCentralNode allows me to dock a viewport in the center and have it save
+//    io.ConfigFlags |= ImGuiDockNodeFlags_PassthruCentralNode;
     //io.ConfigViewportsNoAutoMerge = true;
 
     // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
