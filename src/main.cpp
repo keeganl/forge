@@ -19,6 +19,7 @@
 #include "utils/imgui-layer/GuiLayer.h"
 #include "utils/shader-manager/Shader.h"
 #include "camera/Camera.h"
+#include "mesh/Model.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -111,32 +112,6 @@ bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_wid
     return true;
 }
 
-bool DoTheImportThing( const std::string& pFile) {
-    // Create an instance of the Importer class
-    Assimp::Importer importer;
-
-    // And have it read the given file with some example postprocessing
-    // Usually - if speed is not the most important aspect for you - you'll
-    // probably to request more postprocessing than we do in this example.
-    const aiScene* scene = importer.ReadFile( pFile,
-                                              aiProcess_CalcTangentSpace       |
-                                              aiProcess_Triangulate            |
-                                              aiProcess_JoinIdenticalVertices  |
-                                              aiProcess_SortByPType);
-
-    // If the import failed, report it
-    if( !scene) {
-        std::cout << importer.GetErrorString() << std::endl;
-        return false;
-    }
-
-    // Now we can access the file's contents.
-//    DoTheSceneProcessing( scene);
-    std::cout << scene->mMeshes[0] << std::endl;
-
-    // We're done. Everything will be cleaned up by the importer destructor
-    return true;
-}
 
 int main()
 {
@@ -249,7 +224,7 @@ int main()
             1.0f,  1.0f,  1.0f, 1.0f
     };
 
-    DoTheImportThing("../assets/models/link.obj");
+    Model model = Model("../assets/models/link.obj", false);
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -257,7 +232,7 @@ int main()
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, model.meshes[0].vertices.size(), &model.meshes[0].vertices, GL_STATIC_DRAW);
 
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
@@ -328,7 +303,7 @@ int main()
     float scale = 1.0f;
     float mix = 0.2f;
     float nearClipping = 0.1f;
-    float farClipping = 100.0f;
+    float farClipping = 1000.0f;
     // todo: class to manage
     bool orthographic = false;
     int w = 87;
@@ -427,16 +402,16 @@ int main()
         // bind textures on corresponding texture units
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
-        for (unsigned int i = 0; i < 10; i++)
+        for (unsigned int i = 0; i < model.meshes.size(); i++)
         {
             // calculate the model matrix for each object and pass it to shader before drawing
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            ourShader.setMat4("model", model);
+            glm::mat4 m = glm::mat4(1.0f);
+//            model = glm::translate(model, cubePositions[i]);
+//            float angle = 20.0f * i;
+//            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            ourShader.setMat4("model", m);
 
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            model.meshes[i].Draw(ourShader);
         }
         glBindVertexArray(0);
 
@@ -481,7 +456,9 @@ int main()
         ImGui::Checkbox("Click here", &orthographic);
         ImGui::SliderFloat("FOV", &camera.fov, 45.0f, 100.0f);
         ImGui::DragFloat3("Camera Pos", &camera.pos[0]);
-        ImGui::Button("Reset camera", ImVec2(150, 50));
+        if(ImGui::Button("Reset camera")) {
+            camera.pos = initialCamPos;
+        }
 
         float frameCamSpeed = camera.speed * deltaTime;
         if (ImGui::IsKeyPressed(w)) {

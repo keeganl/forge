@@ -40,7 +40,7 @@ add_executable(forge
         src/mesh/helpers/Vertex.h
         src/mesh/helpers/Texture.h
         src/mesh/Mesh.h
-        src/mesh/Mesh.cpp src/renderer/Renderer.cpp src/renderer/Renderer.h)
+        src/mesh/Mesh.cpp src/renderer/Renderer.cpp src/renderer/Renderer.h src/mesh/Model.cpp src/mesh/Model.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")

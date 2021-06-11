@@ -5,9 +5,12 @@
 #ifndef FORGE_TEXTURE_H
 #define FORGE_TEXTURE_H
 
+#include <string>
+
 struct Texture {
     unsigned int id;
-    string type;
+    std::string type;
+    std::string path;
 };
 
 #endif //FORGE_TEXTURE_H

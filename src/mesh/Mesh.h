@@ -7,9 +7,9 @@
 #include <glad/glad.h> // holds all OpenGL type declarations
 
 #include <vector>
-#include "helpers/Vertex.h";
-#include "helpers/Texture.h";
-#include "../utils/shader-manager/Shader.h";
+#include "helpers/Vertex.h"
+#include "helpers/Texture.h"
+#include "../utils/shader-manager/Shader.h"
 
 class Mesh {
 public:
@@ -88,13 +88,13 @@ private:
 
         // vertex normals
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1,3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, Normal));
+        glVertexAttribPointer(1,3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, normal));
 
         // vertex normals
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2,3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, TexCoords));
+        glVertexAttribPointer(2,3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, texCoords));
 
-        glBindVertexArray(0)
+        glBindVertexArray(0);
 
     }
 
