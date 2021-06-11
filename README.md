@@ -10,9 +10,14 @@ TODO:
     -ImGuizmo
   - Object Tree
     - Loop through models and print them in a structure
+      - Have Assimp loading models just need to print the meshes
     - Object primitives (model them in blender)
-  - Add object texture
+- Add texture to objects
 - Lights
+-Skybox
+  
+
+Stretch
 - Scene management
   - Save scene
   - Load scene
