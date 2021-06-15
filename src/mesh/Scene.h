@@ -2,8 +2,8 @@
 // Created by keega on 6/10/2021.
 //
 
-#ifndef FORGE_MODEL_H
-#define FORGE_MODEL_H
+#ifndef FORGE_SCENE_H
+#define FORGE_SCENE_H
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -14,15 +14,18 @@
 
 
 
-class Model {
+class Scene {
 public:
     // model data
     std::vector<Mesh> meshes;
     std::string directory;
     std::vector<Texture> textures_loaded;
     bool gammaCorrection;
+    bool selected = false;
 
-    Model(std::string const &path, bool gamma = false) : gammaCorrection(gamma) {
+    Scene () {}
+
+    Scene(std::string const &path, bool gamma = false) : gammaCorrection(gamma) {
         loadModel(path);
     }
     void Draw(Shader &shader) {
@@ -30,10 +33,6 @@ public:
             meshes[i].Draw(shader);
         }
     }
-
-private:
-
-
 
     void loadModel(std::string const &path) {
         Assimp::Importer import;
@@ -46,6 +45,9 @@ private:
 
         processNode(scene->mRootNode, scene);
     }
+
+private:
+
 
     void processNode(aiNode *node, const aiScene *scene) {
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -139,7 +141,8 @@ private:
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
         // return a mesh object created from the extracted mesh data
-        return Mesh(vertices, indices, textures);
+        std::string modelName = directory.substr(directory.find_last_of('/') + 1, directory.length());
+        return Mesh(vertices, indices, textures, modelName);
     }
 
     std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName) {
@@ -212,4 +215,4 @@ private:
 };
 
 
-#endif //FORGE_MODEL_H
+#endif //FORGE_SCENE_H

@@ -15,18 +15,23 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream>
+
 #include "utils/imgui-layer/GuiLayer.h"
 #include "utils/shader-manager/Shader.h"
 #include "camera/Camera.h"
-#include "mesh/Model.h"
+#include "mesh/Scene.h"
+
+#include <iostream>
+#include <numeric>
+
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
 // settings
-const unsigned int SCR_WIDTH = 1367;
-const unsigned int SCR_HEIGHT = 667;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 
 static void HelpMarker(const char* desc)
@@ -96,23 +101,8 @@ int main()
             1.0f, -1.0f,  1.0f, 0.0f,
             1.0f,  1.0f,  1.0f, 1.0f
     };
+    Scene scene;
 
-    Model model = Model("../assets/models/Bart/Bart.obj", false);
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, model.meshes[0].vertices.size(), &model.meshes[0].vertices, GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // texture coord attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
 
     // screen quad VAO
     unsigned int quadVAO, quadVBO;
@@ -126,37 +116,8 @@ int main()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-    //load texture
-    // load and create a texture
-    // -------------------------
-    unsigned int texture1;
-    // texture 1
-    // ---------
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters (i.e. mipmapping)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load image, create texture and generate mipmaps
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-    unsigned char *data = stbi_load("../assets/textures/tiles.jpg", &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
 
-
-    // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
+    // tell opengl for each sampler t\o which texture unit it belongs to (only has to be done once)
     // -------------------------------------------------------------------------------------------
     ourShader.use();
     screenShader.setInt("texture1", 0);
@@ -169,20 +130,18 @@ int main()
 
     // Our state
     [[maybe_unused]] bool show_demo_window = true;
-    [[maybe_unused]] bool show_another_window = false;
-    [[maybe_unused]] ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    bool draw = true;
 
     float scale = 1.0f;
-    float mix = 0.2f;
     float nearClipping = 0.1f;
     float farClipping = 1000.0f;
-    // todo: class to manage
     bool orthographic = false;
     int w = 87;
     int a = 65;
     int s = 83;
     int d = 68;
+    int one = 49;
+    int two = 50;
+    int three = 51;
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
@@ -197,7 +156,6 @@ int main()
 
     ourShader.use();
     ourShader.set1DFloat("scale", scale);
-    ourShader.set1DFloat("mixVal", mix);
 //    ourShader.set3DFloat("translate", test[0], test[1], test[2]);
     ourShader.set4DFloat("color",  color.x, color.y, color.z, color.w);
 
@@ -264,26 +222,16 @@ int main()
         view = glm::lookAt(camera.pos, camera.pos + camera.front, camera.up);
         // pass transformation matrices to the shader
 
-        // render boxes
-        glBindVertexArray(VAO);
-        // bind textures on corresponding texture units
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        for (unsigned int i = 0; i < model.meshes.size(); i++)
-        {
-            // calculate the model matrix for each object and pass it to shader before drawing
-            glm::mat4 m = glm::mat4(1.0f);
+        // calculate the model matrix for each object and pass it to shader before drawing
+        glm::mat4 m = glm::mat4(1.0f);
 //            model = glm::translate(model, cubePositions[i]);
 //            float angle = 20.0f * i;
-//            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            ourShader.setMat4("model", m);
-
-            model.meshes[i].Draw(ourShader);
-        }
-        glBindVertexArray(0);
+            m = glm::translate(m, glm::vec3(0.0f, 0.0f, 0.0f));
+        ourShader.setMat4("model", m);
+        scene.Draw(ourShader);
 
 
-        // the error is somewhere in here
+
         // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
@@ -304,55 +252,95 @@ int main()
         GuiLayer::createDockspace();
         GuiLayer::createPerformanceWindow();
         ImGui::ShowMetricsWindow(&show_demo_window);
+        ImGui::ShowDemoWindow(&show_demo_window);
+
+
+        if (ImGui::IsKeyPressed(one)) {
+            scene.loadModel("../assets/models/primitives/cube.obj");
+        }
+        if (ImGui::IsKeyPressed(two)) {
+            scene.loadModel("../assets/models/primitives/cylinder.obj");
+        }
+        if (ImGui::IsKeyPressed(three)) {
+            scene.loadModel("../assets/models/primitives/plane.obj");
+        }
+
+
+        ImGui::Begin("Scene Objects");
+        {
+            for (std::vector<Mesh>::iterator it = scene.meshes.begin() ; it != scene.meshes.end();) {
+                ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_None;
+                ImGui::TreeNodeEx("Field", flags,  it->modelName.c_str());
+                ImGui::SameLine();
+                if (ImGui::Button("Delete")) {
+                    std::cout << "Delete mesh" << std::endl;
+                    it = scene.meshes.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+            for (auto &m : scene.meshes) {
+
+            }
+            if(ImGui::Button("Add mesh")) {
+
+                std::cout << "adding mesh" << std::endl;
+                scene.loadModel("../assets/models/Knight Artorias/c4100.obj");
+            }
+        }
+        ImGui::End();
 
         ImGui::Begin("Geometry Properties");
-        ImGui::SliderFloat("Scale", &scale, -10.0f, 10.0f);
-        ImGui::Text("Color widget:");
-        ImGui::SameLine(); HelpMarker(
-                "Click on the color square to open a color picker.\n"
-                "CTRL+click on individual component to input value.\n");
-        ImGui::ColorEdit3("Mesh color", (float*)&color);
-        ImGui::SliderFloat("Mix", &mix, 0.0f, 1.0f);
+        {
+            ImGui::SliderFloat("Scale", &scale, -10.0f, 10.0f);
+            ImGui::Text("Color widget:");
+            ImGui::SameLine(); HelpMarker(
+                    "Click on the color square to open a color picker.\n"
+                    "CTRL+click on individual component to input value.\n");
+            ImGui::ColorEdit3("Mesh color", (float*)&color);
+        }
         ImGui::End();
 
         ImGui::Begin("Camera Properties");
-        ImGui::Text("Select projection mode:");
-        ImGui::Text("Swap between orthographic and projection:");
-        ImGui::SameLine(); HelpMarker(
-                "Perspective is default.\n");
-        ImGui::Checkbox("Click here", &orthographic);
-        ImGui::SliderFloat("FOV", &camera.fov, 45.0f, 100.0f);
-        ImGui::DragFloat3("Camera Pos", &camera.pos[0]);
-        if(ImGui::Button("Reset camera")) {
-            camera.pos = initialCamPos;
-        }
+        {
+            ImGui::Text("Select projection mode:");
+            ImGui::Text("Swap between orthographic and projection:");
+            ImGui::SameLine(); HelpMarker(
+                    "Perspective is default.\n");
+            ImGui::Checkbox("Click here", &orthographic);
+            ImGui::SliderFloat("FOV", &camera.fov, 45.0f, 250.0f);
+            ImGui::DragFloat3("Camera Pos", &camera.pos[0]);
+            if(ImGui::Button("Reset camera")) {
+                camera.pos = initialCamPos;
+            }
 
-        float frameCamSpeed = camera.speed * deltaTime;
-        if (ImGui::IsKeyPressed(w)) {
+            float frameCamSpeed = camera.speed * deltaTime;
+            if (ImGui::IsKeyPressed(w)) {
 
-            camera.pos += frameCamSpeed * camera.front;
-        }
-        if (ImGui::IsKeyPressed(a)) {
-            camera.pos -= frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
-        }
-        if (ImGui::IsKeyPressed(s)) {
-            camera.pos -= frameCamSpeed * camera.front;
+                camera.pos += frameCamSpeed * camera.front;
+            }
+            if (ImGui::IsKeyPressed(a)) {
+                camera.pos -= frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
+            }
+            if (ImGui::IsKeyPressed(s)) {
+                camera.pos -= frameCamSpeed * camera.front;
 
-        }
-        if (ImGui::IsKeyPressed(d)) {
-            camera.pos += frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
-        }
+            }
+            if (ImGui::IsKeyPressed(d)) {
+                camera.pos += frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
+            }
 
 
-        if (io.MouseWheel < 0 && camera.fov < 100.0f) {
-            camera.fov = camera.fov + 5.0f;
-        }
-        if (io.MouseWheel > 0 && camera.fov > 45.0f) {
-            camera.fov = camera.fov - 5.0f;
+            if (io.MouseWheel < 0 && camera.fov < 250.0f) {
+                camera.fov = camera.fov + 5.0f;
+            }
+            if (io.MouseWheel > 0 && camera.fov > 45.0f) {
+                camera.fov = camera.fov - 5.0f;
+            }
         }
         ImGui::End();
 
-        ImGui::Begin("Viewport");
+        ImGui::Begin("Scene");
         {
             // Using a Child allow to fill all the space of the window.
             // It also alows customization
@@ -361,35 +349,40 @@ int main()
             ImVec2 wsize = ImGui::GetWindowSize();
             // Because I use the texture from OpenGL, I need to invert the V from the UV.
             ImGui::Image((ImTextureID)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
+            if (ImGui::IsWindowHovered()) {
+                std::cout << "Hovering scene tab" << std::endl;
+            }
             ImGui::EndChild();
         }
+
         ImGui::End();
 
         ImGui::Begin("Events");
-        ImGui::Text("Keys down:");          for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyDown(i))        { ImGui::SameLine(); ImGui::Text("%d (0x%X) (%.02f secs)", i, i, io.KeysDownDuration[i]); }
-        ImGui::Text("Keys pressed:");       for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyPressed(i))     { ImGui::SameLine(); ImGui::Text("%d (0x%X)", i, i); }
-        ImGui::Text("Keys release:");       for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyReleased(i))    { ImGui::SameLine(); ImGui::Text("%d (0x%X)", i, i); }
-        ImGui::Text("Keys mods: %s%s%s%s", io.KeyCtrl ? "CTRL " : "", io.KeyShift ? "SHIFT " : "", io.KeyAlt ? "ALT " : "", io.KeySuper ? "SUPER " : "");
-        ImGui::Text("Chars queue:");        for (int i = 0; i < io.InputQueueCharacters.Size; i++) { ImWchar c = io.InputQueueCharacters[i]; ImGui::SameLine();  ImGui::Text("\'%c\' (0x%04X)", (c > ' ' && c <= 255) ? (char)c : '?', c); } // FIXME: We should convert 'c' to UTF-8 here but the functions are not public.
+        {
+            ImGui::Text("Keys down:");          for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyDown(i))        { ImGui::SameLine(); ImGui::Text("%d (0x%X) (%.02f secs)", i, i, io.KeysDownDuration[i]); }
+            ImGui::Text("Keys pressed:");       for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyPressed(i))     { ImGui::SameLine(); ImGui::Text("%d (0x%X)", i, i); }
+            ImGui::Text("Keys release:");       for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyReleased(i))    { ImGui::SameLine(); ImGui::Text("%d (0x%X)", i, i); }
+            ImGui::Text("Keys mods: %s%s%s%s", io.KeyCtrl ? "CTRL " : "", io.KeyShift ? "SHIFT " : "", io.KeyAlt ? "ALT " : "", io.KeySuper ? "SUPER " : "");
+            ImGui::Text("Chars queue:");        for (int i = 0; i < io.InputQueueCharacters.Size; i++) { ImWchar c = io.InputQueueCharacters[i]; ImGui::SameLine();  ImGui::Text("\'%c\' (0x%04X)", (c > ' ' && c <= 255) ? (char)c : '?', c); } // FIXME: We should convert 'c' to UTF-8 here but the functions are not public.
 
-        ImGui::Text("NavInputs down:");     for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputs[i] > 0.0f)              { ImGui::SameLine(); ImGui::Text("[%d] %.2f (%.02f secs)", i, io.NavInputs[i], io.NavInputsDownDuration[i]); }
-        ImGui::Text("NavInputs pressed:");  for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputsDownDuration[i] == 0.0f) { ImGui::SameLine(); ImGui::Text("[%d]", i); }
+            ImGui::Text("NavInputs down:");     for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputs[i] > 0.0f)              { ImGui::SameLine(); ImGui::Text("[%d] %.2f (%.02f secs)", i, io.NavInputs[i], io.NavInputsDownDuration[i]); }
+            ImGui::Text("NavInputs pressed:");  for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputsDownDuration[i] == 0.0f) { ImGui::SameLine(); ImGui::Text("[%d]", i); }
 
-        if (ImGui::IsMousePosValid())
-            ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y);
-        else
-            ImGui::Text("Mouse pos: <INVALID>");
-        ImGui::Text("Mouse delta: (%g, %g)", io.MouseDelta.x, io.MouseDelta.y);
-        ImGui::Text("Mouse down:");     for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDown(i))         { ImGui::SameLine(); ImGui::Text("b%d (%.02f secs)", i, io.MouseDownDuration[i]); }
-        ImGui::Text("Mouse clicked:");  for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseClicked(i))      { ImGui::SameLine(); ImGui::Text("b%d", i); }
-        ImGui::Text("Mouse dblclick:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDoubleClicked(i)){ ImGui::SameLine(); ImGui::Text("b%d", i); }
-        ImGui::Text("Mouse released:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseReleased(i))     { ImGui::SameLine(); ImGui::Text("b%d", i); }
-        ImGui::Text("Mouse wheel: %.1f", io.MouseWheel);
+            if (ImGui::IsMousePosValid())
+                ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y);
+            else
+                ImGui::Text("Mouse pos: <INVALID>");
+            ImGui::Text("Mouse delta: (%g, %g)", io.MouseDelta.x, io.MouseDelta.y);
+            ImGui::Text("Mouse down:");     for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDown(i))         { ImGui::SameLine(); ImGui::Text("b%d (%.02f secs)", i, io.MouseDownDuration[i]); }
+            ImGui::Text("Mouse clicked:");  for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseClicked(i))      { ImGui::SameLine(); ImGui::Text("b%d", i); }
+            ImGui::Text("Mouse dblclick:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDoubleClicked(i)){ ImGui::SameLine(); ImGui::Text("b%d", i); }
+            ImGui::Text("Mouse released:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseReleased(i))     { ImGui::SameLine(); ImGui::Text("b%d", i); }
+            ImGui::Text("Mouse wheel: %.1f", io.MouseWheel);
+        }
         ImGui::End();
 
         ourShader.use();
         ourShader.set1DFloat("scale", scale);
-        ourShader.set1DFloat("mixVal", mix);
         ourShader.set4DFloat("color",  color.x, color.y, color.z, color.w);
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
@@ -418,8 +411,6 @@ int main()
 
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
     glDeleteFramebuffers(1, &framebuffer);
     glDeleteVertexArrays(1, &quadVAO);
     glDeleteBuffers(1, &quadVBO);
