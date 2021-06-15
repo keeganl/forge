@@ -30,7 +30,14 @@ add_executable(forge
         external/imgui/imgui_impl_opengl3.cpp
         external/imgui/imgui_impl_win32.h
         external/imgui/imgui_impl_win32.cpp
+        external/imgui/ImCurveEdit.h
+        external/imgui/ImCurveEdit.cpp
+        external/imgui/ImGradient.h
+        external/imgui/ImGradient.cpp
+        external/imgui/ImGuizmo.h
+        external/imgui/ImGuizmo.cpp
         external/stb/stb_image.h
+        external/entt/single_include/entt/entt.hpp
         src/utils/imgui-layer/GuiLayer.cpp
         src/utils/imgui-layer/GuiLayer.h
         src/utils/shader-manager/Shader.cpp
@@ -40,7 +47,11 @@ add_executable(forge
         src/mesh/helpers/Vertex.h
         src/mesh/helpers/Texture.h
         src/mesh/Mesh.h
-        src/mesh/Mesh.cpp src/renderer/Renderer.cpp src/renderer/Renderer.h src/mesh/Model.cpp src/mesh/Model.h)
+        src/mesh/Mesh.cpp
+        src/renderer/OpenGLRenderer.cpp
+        src/renderer/OpenGLRenderer.h
+        src/mesh/Scene.cpp
+        src/mesh/Scene.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")

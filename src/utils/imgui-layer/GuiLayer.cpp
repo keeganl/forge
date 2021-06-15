@@ -12,11 +12,10 @@ void GuiLayer::createContext(GLFWwindow *window) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     //    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+//    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+//    io.ConfigFlags |= ImGuiConfigFlags_View[]
+
     io.ConfigFlags |= ImGuiWindowFlags_MenuBar;
-    // not setting the PassthruCentralNode allows me to dock a viewport in the center and have it save
-//    io.ConfigFlags |= ImGuiDockNodeFlags_PassthruCentralNode;
-    //io.ConfigViewportsNoAutoMerge = true;
 
     // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
     // because it would be confusing to have two docking targets within each others.
@@ -64,10 +63,10 @@ void GuiLayer::createContext(GLFWwindow *window) {
     colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.160f, 0.160f, 0.160f, 1.000f);
     colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.277f, 0.277f, 0.277f, 1.000f);
     colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.300f, 0.300f, 0.300f, 1.000f);
-    colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+    colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.204f,0.561f,0.921f, 1.000f);
     colors[ImGuiCol_CheckMark]              = ImVec4(1.000f, 1.000f, 1.000f, 1.000f);
     colors[ImGuiCol_SliderGrab]             = ImVec4(0.391f, 0.391f, 0.391f, 1.000f);
-    colors[ImGuiCol_SliderGrabActive]       = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+    colors[ImGuiCol_SliderGrabActive]       = ImVec4(0.2039f,0.561f,0.921f, 1.000f);
     colors[ImGuiCol_Button]                 = ImVec4(1.000f, 1.000f, 1.000f, 0.000f);
     colors[ImGuiCol_ButtonHovered]          = ImVec4(1.000f, 1.000f, 1.000f, 0.156f);
     colors[ImGuiCol_ButtonActive]           = ImVec4(1.000f, 1.000f, 1.000f, 0.391f);
@@ -76,27 +75,30 @@ void GuiLayer::createContext(GLFWwindow *window) {
     colors[ImGuiCol_HeaderActive]           = ImVec4(0.469f, 0.469f, 0.469f, 1.000f);
     colors[ImGuiCol_Separator]              = colors[ImGuiCol_Border];
     colors[ImGuiCol_SeparatorHovered]       = ImVec4(0.391f, 0.391f, 0.391f, 1.000f);
-    colors[ImGuiCol_SeparatorActive]        = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+    colors[ImGuiCol_SeparatorActive]        = ImVec4(0.204f, 0.561f,0.921f, 1.000f);
     colors[ImGuiCol_ResizeGrip]             = ImVec4(1.000f, 1.000f, 1.000f, 0.250f);
     colors[ImGuiCol_ResizeGripHovered]      = ImVec4(1.000f, 1.000f, 1.000f, 0.670f);
-    colors[ImGuiCol_ResizeGripActive]       = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+    colors[ImGuiCol_ResizeGripActive]       = ImVec4(0.204f, 0.561f,0.921f, 1.000f);
     colors[ImGuiCol_Tab]                    = ImVec4(0.098f, 0.098f, 0.098f, 1.000f);
     colors[ImGuiCol_TabHovered]             = ImVec4(0.352f, 0.352f, 0.352f, 1.000f);
     colors[ImGuiCol_TabActive]              = ImVec4(0.195f, 0.195f, 0.195f, 1.000f);
     colors[ImGuiCol_TabUnfocused]           = ImVec4(0.098f, 0.098f, 0.098f, 1.000f);
     colors[ImGuiCol_TabUnfocusedActive]     = ImVec4(0.195f, 0.195f, 0.195f, 1.000f);
-    colors[ImGuiCol_DockingPreview]         = ImVec4(1.000f, 0.391f, 0.000f, 0.781f);
+    colors[ImGuiCol_DockingPreview]         = ImVec4(0.204f, 0.561f,0.921f, 0.781f);
     colors[ImGuiCol_DockingEmptyBg]         = ImVec4(0.180f, 0.180f, 0.180f, 1.000f);
     colors[ImGuiCol_PlotLines]              = ImVec4(0.469f, 0.469f, 0.469f, 1.000f);
-    colors[ImGuiCol_PlotLinesHovered]       = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+    colors[ImGuiCol_PlotLinesHovered]       = ImVec4(0.204f, 0.561f,0.921f, 1.000f);
     colors[ImGuiCol_PlotHistogram]          = ImVec4(0.586f, 0.586f, 0.586f, 1.000f);
-    colors[ImGuiCol_PlotHistogramHovered]   = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+    colors[ImGuiCol_PlotHistogramHovered]   = ImVec4(0.204f, 0.561f,0.921f, 1.000f);
     colors[ImGuiCol_TextSelectedBg]         = ImVec4(1.000f, 1.000f, 1.000f, 0.156f);
-    colors[ImGuiCol_DragDropTarget]         = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
-    colors[ImGuiCol_NavHighlight]           = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
-    colors[ImGuiCol_NavWindowingHighlight]  = ImVec4(1.000f, 0.391f, 0.000f, 1.000f);
+    colors[ImGuiCol_DragDropTarget]         = ImVec4(0.204f, 0.561f,0.921f, 1.000f);
+    colors[ImGuiCol_NavHighlight]           = ImVec4(0.204f, 0.561f,0.921f, 1.000f);
+    colors[ImGuiCol_NavWindowingHighlight]  = ImVec4(0.204f, 0.561f,0.921f, 1.000f);
     colors[ImGuiCol_NavWindowingDimBg]      = ImVec4(0.000f, 0.000f, 0.000f, 0.586f);
     colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(0.000f, 0.000f, 0.000f, 0.586f);
+    // orange: 0.2039f, 0.561f,  0.921f
+    // blue: 0.2039f, 0.561f,  0.921f
+
 
     style->ChildRounding = 4.0f;
     style->FrameBorderSize = 1.0f;
@@ -122,8 +124,7 @@ void GuiLayer::createDockspace() {
     // Create the docking environment
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-                                   ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
-                                   ImGuiWindowFlags_NoBackground;
+                                   ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
