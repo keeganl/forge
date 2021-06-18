@@ -18,13 +18,27 @@ public:
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
+    bool selected = false;
+    glm::mat4 modelMatrix;
+    float uniformScale;
+    glm::vec3 scaleAxes;
+    glm::vec4 color;
+    // gl specific
     unsigned int VAO;
+
+
+
 
     Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, std::string &modelName) {
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
         this->modelName = modelName;
+        this->selected = false;
+        this->modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+        this->scaleAxes = glm::vec3(1.0f, 1.0f, 1.0f);
+        this->uniformScale = 1.0f;
+        this->color = glm::vec4(1.0, 0.0, 0.0, 1.0);
 
         setupMesh();
     }
@@ -60,7 +74,8 @@ public:
 
         // draw mesh
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+//        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
         glBindVertexArray(0);
 
         // always good practice to set everything back to defaults once configured.

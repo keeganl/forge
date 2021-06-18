@@ -2,6 +2,7 @@
 #include "../external/imgui/imgui_impl_glfw.h"
 #include "../external/imgui/imgui_impl_opengl3.h"
 #include "../external/imgui/imgui_internal.h"
+#include "../external/imgui/imfilebrowser.h"
 
 #include "../external/stb/stb_image.h"
 
@@ -22,8 +23,8 @@
 #include "mesh/Scene.h"
 
 #include <iostream>
-#include <numeric>
-
+#include <windows.h>
+#include <tchar.h>
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -102,6 +103,10 @@ int main()
             1.0f,  1.0f,  1.0f, 1.0f
     };
     Scene scene;
+    ImGui::FileBrowser fileDialog;
+    // (optional) set browser properties
+    fileDialog.SetTitle("Select Mesh");
+    fileDialog.SetTypeFilters({ ".obj", ".fbx" });
 
 
     // screen quad VAO
@@ -148,16 +153,12 @@ int main()
 
 
 
-    ImVec4 color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 
     Camera camera = Camera();
 
     glm::vec3 initialCamPos = camera.pos;
 
     ourShader.use();
-    ourShader.set1DFloat("scale", scale);
-//    ourShader.set3DFloat("translate", test[0], test[1], test[2]);
-    ourShader.set4DFloat("color",  color.x, color.y, color.z, color.w);
 
 
     // framebuffer configuration
@@ -220,15 +221,17 @@ int main()
             projection = glm::perspective(glm::radians(camera.fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, nearClipping, farClipping);
         }
         view = glm::lookAt(camera.pos, camera.pos + camera.front, camera.up);
-        // pass transformation matrices to the shader
 
-        // calculate the model matrix for each object and pass it to shader before drawing
-        glm::mat4 m = glm::mat4(1.0f);
+        for (Mesh &m : scene.meshes) {
+            // calculate the model matrix for each object and pass it to shader before drawing
 //            model = glm::translate(model, cubePositions[i]);
 //            float angle = 20.0f * i;
-            m = glm::translate(m, glm::vec3(0.0f, 0.0f, 0.0f));
-        ourShader.setMat4("model", m);
-        scene.Draw(ourShader);
+            ourShader.setMat4("model", m.modelMatrix);
+            ourShader.set3DFloat("scaleAxes", m.scaleAxes.x, m.scaleAxes.y, m.scaleAxes.z);
+            ourShader.set4DFloat("color",  m.color.x, m.color.y, m.color.z, m.color.w);
+            ourShader.set1DFloat("scale", m.uniformScale);
+            scene.Draw(ourShader);
+        }
 
 
 
@@ -254,23 +257,56 @@ int main()
         ImGui::ShowMetricsWindow(&show_demo_window);
         ImGui::ShowDemoWindow(&show_demo_window);
 
+        // menu bar
+        {
+            if (ImGui::BeginMainMenuBar())
+            {
+                if (ImGui::BeginMenu("File"))
+                {
+                    if(ImGui::Button("Settings")) {
 
-        if (ImGui::IsKeyPressed(one)) {
-            scene.loadModel("../assets/models/primitives/cube.obj");
-        }
-        if (ImGui::IsKeyPressed(two)) {
-            scene.loadModel("../assets/models/primitives/cylinder.obj");
-        }
-        if (ImGui::IsKeyPressed(three)) {
-            scene.loadModel("../assets/models/primitives/plane.obj");
+                        std::cout << "opening settings modal" << std::endl;
+                        ImGui::OpenPopup("s");
+                    }
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Edit"))
+                {
+                    if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+                    if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+                    ImGui::Separator();
+                    if (ImGui::MenuItem("Cut", "CTRL+X")) {}
+                    if (ImGui::MenuItem("Copy", "CTRL+C")) {}
+                    if (ImGui::MenuItem("Paste", "CTRL+V")) {}
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMainMenuBar();
+            }
+
         }
 
+        if (ImGui::BeginPopupModal("s", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text("Settings");
+            ImGui::Separator();
+
+
+            if (ImGui::Button("Apply", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            ImGui::SetItemDefaultFocus();
+            ImGui::SameLine();
+            if (ImGui::Button("Revert", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
 
         ImGui::Begin("Scene Objects");
         {
             for (std::vector<Mesh>::iterator it = scene.meshes.begin() ; it != scene.meshes.end();) {
                 ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_None;
                 ImGui::TreeNodeEx("Field", flags,  it->modelName.c_str());
+                if (ImGui::IsItemClicked()) {
+                    std::cout << it->modelName.c_str() << std::endl;
+                    it->selected = !it->selected;
+                }
                 ImGui::SameLine();
                 if (ImGui::Button("Delete")) {
                     std::cout << "Delete mesh" << std::endl;
@@ -279,25 +315,78 @@ int main()
                     ++it;
                 }
             }
-            for (auto &m : scene.meshes) {
-
-            }
             if(ImGui::Button("Add mesh")) {
 
                 std::cout << "adding mesh" << std::endl;
-                scene.loadModel("../assets/models/Knight Artorias/c4100.obj");
+                ImGui::OpenPopup("Add mesh");
+            }
+
+            if (ImGui::BeginPopupModal("Add mesh", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Select a model to generate");
+                ImGui::Separator();
+
+
+                if (ImGui::Button("Cube")) {
+                    scene.loadModel("../assets/models/primitives/cube.obj");
+                }
+                if (ImGui::Button("Cylinder")) {
+                    scene.loadModel("../assets/models/primitives/cylinder.obj");
+                }
+                if (ImGui::Button("Plane")) {
+                    scene.loadModel("../assets/models/primitives/plane.obj");
+                }
+                if (ImGui::Button("Import")) {
+                    fileDialog.Open();
+                }
+
+                if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+                ImGui::EndPopup();
             }
         }
         ImGui::End();
 
-        ImGui::Begin("Geometry Properties");
         {
-            ImGui::SliderFloat("Scale", &scale, -10.0f, 10.0f);
-            ImGui::Text("Color widget:");
-            ImGui::SameLine(); HelpMarker(
-                    "Click on the color square to open a color picker.\n"
-                    "CTRL+click on individual component to input value.\n");
-            ImGui::ColorEdit3("Mesh color", (float*)&color);
+
+            fileDialog.Display();
+
+            if (fileDialog.HasSelected()) {
+                std::cout << "Selected filename" << fileDialog.GetSelected().string() << std::endl;
+                scene.loadModel(fileDialog.GetSelected().string());
+                fileDialog.ClearSelected();
+            }
+
+
+        }
+
+        ImGui::Begin("Mesh Properties");
+        {
+           for (int i = 0; i < scene.meshes.size(); i++) {
+               if (scene.meshes[i].selected) {
+                   ImGui::Text("Mesh Name: ");
+                   ImGui::SameLine();
+                   ImGui::Text(scene.meshes[i].modelName.c_str());
+                   ImGui::PushID(i);
+                   ImGui::SliderFloat("Uniform Scale", &scene.meshes[i].uniformScale, 1.0f, 20.0f);
+                   ImGui::PopID();
+
+                   ImGui::PushID(&scene.meshes[i].scaleAxes[0]);
+                   ImGui::SliderFloat3("Axis Scale", &scene.meshes[i].scaleAxes[0], 0.0f, 10.0f);
+                   ImGui::PopID();
+
+                   ImGui::Text("Color:");
+                   ImGui::PushID(&scene.meshes[i].color);
+                   ImGui::SameLine(); HelpMarker(
+                           "Click on the color square to open a color picker.\n"
+                           "CTRL+click on individual component to input value.\n");
+                   ImGui::ColorEdit3("Mesh color", (float*)&scene.meshes[i].color);
+                   ImGui::PopID();
+
+               }
+           }
         }
         ImGui::End();
 
@@ -350,7 +439,8 @@ int main()
             // Because I use the texture from OpenGL, I need to invert the V from the UV.
             ImGui::Image((ImTextureID)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
             if (ImGui::IsWindowHovered()) {
-                std::cout << "Hovering scene tab" << std::endl;
+                //project out of normalized coords
+                //std::cout << "Hovering scene tab" << std::endl;
             }
             ImGui::EndChild();
         }
@@ -383,7 +473,6 @@ int main()
 
         ourShader.use();
         ourShader.set1DFloat("scale", scale);
-        ourShader.set4DFloat("color",  color.x, color.y, color.z, color.w);
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 

@@ -21,7 +21,6 @@ public:
     std::string directory;
     std::vector<Texture> textures_loaded;
     bool gammaCorrection;
-    bool selected = false;
 
     Scene () {}
 
@@ -141,7 +140,7 @@ private:
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
         // return a mesh object created from the extracted mesh data
-        std::string modelName = directory.substr(directory.find_last_of('/') + 1, directory.length());
+        std::string modelName = directory.substr(directory.find_last_of('/') + 1);
         return Mesh(vertices, indices, textures, modelName);
     }
 
