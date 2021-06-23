@@ -4,7 +4,6 @@
 
 #ifndef FORGE_MESH_H
 #define FORGE_MESH_H
-#include <glad/glad.h> // holds all OpenGL type declarations
 
 #include <vector>
 #include "helpers/Vertex.h"
@@ -20,9 +19,7 @@ public:
     unsigned int VAO;
 
 
-
-
-    Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, std::string &modelName) {
+    Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) {
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;

@@ -14,13 +14,14 @@
 
 
 
-class Model {
+class Model  {
 public:
     // model data
     std::vector<Mesh> meshes;
     std::string directory;
     std::vector<Texture> textures_loaded;
     bool gammaCorrection;
+    bool isLight;
     std::string modelName;
     bool selected = false;
     glm::mat4 modelMatrix;
@@ -33,7 +34,7 @@ public:
 
     Model () {}
 
-    Model(std::string const &path, bool gamma = false) : gammaCorrection(gamma) {
+    Model(std::string const &path, bool gamma = false, bool light = false) : gammaCorrection(gamma), isLight(light) {
         loadModel(path);
         this->selected = false;
         this->pos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -41,7 +42,11 @@ public:
         this->rotateFloats = glm::vec3(0.0f, 0.0f, 0.0f);
         this->scaleAxes = glm::vec3(1.0f, 1.0f, 1.0f);
         this->uniformScale = 1.0f;
-        this->color = glm::vec4(1.0, 0.0, 0.0, 1.0);
+        if (light) {
+            this->color = glm::vec4(1.0, 1.0, 1.0, 1.0);
+        } else {
+            this->color = glm::vec4(1.0, 0.0, 0.0, 1.0);
+        }
     }
 
     void Draw(Shader &shader) {
@@ -159,7 +164,7 @@ private:
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
         // return a mesh object created from the extracted mesh data
-        return Mesh(vertices, indices, textures, modelName);
+        return Mesh(vertices, indices, textures);
     }
 
     std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName) {

@@ -21,6 +21,7 @@
 #include "utils/shader-manager/Shader.h"
 #include "camera/Camera.h"
 #include "mesh/Model.h"
+#include "light/Light.h"
 
 #include <iostream>
 #include <windows.h>
@@ -87,9 +88,10 @@ int main()
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
-    // build and compile our shader zprogram
+    // build and compile our shader program
     // ------------------------------------
-    Shader ourShader("../shaders/vert.glsl", "../shaders/frag.glsl");
+    Shader meshShader("../shaders/vert.glsl", "../shaders/frag.glsl");
+    Shader lightShader("../shaders/light/vert.glsl", "../shaders/light/frag.glsl");
     Shader screenShader("../shaders/framebuffer/vert.glsl", "../shaders/framebuffer/frag.glsl");
 
 
@@ -124,10 +126,8 @@ int main()
 
     // tell opengl for each sampler t\o which texture unit it belongs to (only has to be done once)
     // -------------------------------------------------------------------------------------------
-    ourShader.use();
-    screenShader.setInt("texture1", 0);
 
-    ourShader.use();
+    meshShader.use();
     screenShader.setInt("screenTexture", 0);
 
     GuiLayer::createContext(window);
@@ -151,7 +151,7 @@ int main()
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
-    std::vector<Model> scenes;
+    std::vector<std::unique_ptr<Model>> scenes;
 
 
 
@@ -160,7 +160,7 @@ int main()
 
     glm::vec3 initialCamPos = camera.pos;
 
-    ourShader.use();
+    meshShader.use();
 
 
     // framebuffer configuration
@@ -226,28 +226,32 @@ int main()
 
         for (int i = 0; i < scenes.size(); i++) {
             // calculate the model matrix for each object and pass it to shader before drawing
-            scenes[i].modelMatrix = glm::translate(glm::mat4(1.0f), scenes[i].pos);
+            scenes[i]->modelMatrix = glm::translate(glm::mat4(1.0f), scenes[i]->pos);
 
-            scenes[i].modelMatrix =  scenes[i].modelMatrix * (
-                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i].rotateFloats.x), glm::vec3(1.0,0.0f,0.0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i].rotateFloats.y), glm::vec3(0.0,1.0f,0.0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i].rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
+            scenes[i]->modelMatrix =  scenes[i]->modelMatrix * (
+                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i]->rotateFloats.x), glm::vec3(1.0,0.0f,0.0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i]->rotateFloats.y), glm::vec3(0.0,1.0f,0.0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i]->rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
                     );
 
-            ourShader.setMat4("model", scenes[i].modelMatrix);
-            ourShader.set3DFloat("scaleAxes", scenes[i].scaleAxes.x, scenes[i].scaleAxes.y, scenes[i].scaleAxes.z);
-            ourShader.set4DFloat("color",  scenes[i].color.x, scenes[i].color.y, scenes[i].color.z, scenes[i].color.w);
-            ourShader.set1DFloat("scale", scenes[i].uniformScale);
+            meshShader.setMat4("model", scenes[i]->modelMatrix);
+            meshShader.set3DFloat("scaleAxes", scenes[i]->scaleAxes.x, scenes[i]->scaleAxes.y, scenes[i]->scaleAxes.z);
+            meshShader.set4DFloat("color", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z, scenes[i]->color.w);
+            meshShader.set1DFloat("scale", scenes[i]->uniformScale);
 
-            if (scenes[i].meshes[0].textures.empty()) {
-                scenes[i].mixVal = 0.0f;
-                ourShader.set1DFloat("mixVal", scenes[i].mixVal);
+            if (scenes[i]->meshes[0].textures.empty()) {
+                scenes[i]->mixVal = 0.0f;
+                meshShader.set1DFloat("mixVal", scenes[i]->mixVal);
             } else {
-                scenes[i].mixVal = 1.0f;
-                ourShader.set1DFloat("mixVal", scenes[i].mixVal);
+                scenes[i]->mixVal = 1.0f;
+                meshShader.set1DFloat("mixVal", scenes[i]->mixVal);
             }
 
-            scenes[i].Draw(ourShader);
+            if (scenes[i]->isLight) {
+                scenes[i]->Draw(lightShader);
+            } else {
+                scenes[i]->Draw(meshShader);
+            }
         }
 
 
@@ -316,42 +320,42 @@ int main()
 
         ImGui::Begin("Model Objects");
         {
-            for (std::vector<Model>::iterator it = scenes.begin() ; it != scenes.end();) {
-                std::cout << it->modelName << std::endl;
+            for (int i = 0; i < scenes.size(); i++) {
                 ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_None;
-                ImGui::TreeNodeEx("Field", flags,  it->modelName.c_str());
+                ImGui::TreeNodeEx("Field", flags,  scenes[i]->modelName.c_str());
                 if (ImGui::IsItemClicked()) {
-                    std::cout << it->modelName.c_str() << std::endl;
-                    it->selected = !it->selected;
+                    std::cout << scenes[i]->modelName.c_str() << std::endl;
+                    scenes[i]->selected = !scenes[i]->selected;
                 }
                 ImGui::SameLine();
                 if (ImGui::Button("Delete")) {
                     std::cout << "Delete mesh" << std::endl;
-                    it = scenes.erase(it);
-                } else {
-                    ++it;
+                    scenes.erase(scenes.begin() + i);
                 }
             }
-            if(ImGui::Button("Add mesh")) {
+            if(ImGui::Button("Add object")) {
 
                 std::cout << "adding mesh" << std::endl;
-                ImGui::OpenPopup("Add mesh");
+                ImGui::OpenPopup("Add object");
             }
 
-            if (ImGui::BeginPopupModal("Add mesh", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            if (ImGui::BeginPopupModal("Add object", NULL, ImGuiWindowFlags_AlwaysAutoResize))
             {
                 ImGui::Text("Select a model to generate");
                 ImGui::Separator();
 
 
                 if (ImGui::Button("Cube")) {
-                    scenes.push_back(Model("../assets/models/primitives/cube/cube.obj"));
+                    scenes.push_back(std::make_unique<Model>("../assets/models/primitives/cube/cube.obj"));
                 }
                 if (ImGui::Button("Cylinder")) {
-                    scenes.push_back(Model("../assets/models/primitives/cylinder.obj"));
+                    scenes.push_back(std::make_unique<Model>("../assets/models/primitives/cylinder.obj"));
                 }
                 if (ImGui::Button("Plane")) {
-                    scenes.push_back(Model("../assets/models/primitives/plane.obj"));
+                    scenes.push_back(std::make_unique<Model>("../assets/models/primitives/plane.obj"));
+                }
+                if (ImGui::Button("Light")) {
+                    scenes.push_back(std::make_unique<Model>("../assets/models/primitives/cube/cube.obj", false, true));
                 }
                 if (ImGui::Button("Import")) {
                     fileDialog.Open();
@@ -372,8 +376,7 @@ int main()
 
             if (fileDialog.HasSelected()) {
                 std::cout << "Selected filename" << fileDialog.GetSelected().string() << std::endl;
-                Model m = Model(fileDialog.GetSelected().string());
-                scenes.push_back(m);
+                scenes.push_back(std::make_unique<Model>(fileDialog.GetSelected().string()));
                 fileDialog.ClearSelected();
             }
 
@@ -382,35 +385,35 @@ int main()
 
         ImGui::Begin("Mesh Properties");
         {
-           for (Model & m: scenes) {
-               if (m.selected) {
+           for (auto &m: scenes) {
+               if (m->selected) {
                    ImGui::Text("Mesh Name: ");
                    ImGui::SameLine();
-                   ImGui::Text(m.modelName.c_str());
+                   ImGui::Text(m->modelName.c_str());
 
-                   ImGui::PushID(&m.uniformScale);
-                   ImGui::SliderFloat("Uniform Scale", &m.uniformScale, 1.0f, 20.0f);
+                   ImGui::PushID(&m->uniformScale);
+                   ImGui::SliderFloat("Uniform Scale", &m->uniformScale, 1.0f, 20.0f);
                    ImGui::PopID();
 
-                   ImGui::PushID(&m.scaleAxes[0]);
-                   ImGui::SliderFloat3("Axis Scale", &m.scaleAxes[0], 0.0f, 10.0f);
+                   ImGui::PushID(&m->scaleAxes[0]);
+                   ImGui::SliderFloat3("Axis Scale", &m->scaleAxes[0], 0.0f, 10.0f);
                    ImGui::PopID();
 
-                   ImGui::PushID(&m.modelMatrix);
-                   ImGui::SliderFloat3("Model Position", &m.pos[0], -100.0f, 100.0f);
+                   ImGui::PushID(&m->modelMatrix);
+                   ImGui::SliderFloat3("Model Position", &m->pos[0], -100.0f, 100.0f);
                    ImGui::PopID();
 
-                   ImGui::PushID(&m.rotateFloats[0]);
-                   ImGui::SliderFloat3("Model Rotation", &m.rotateFloats[0], 0.0f, 360.0f);
+                   ImGui::PushID(&m->rotateFloats[0]);
+                   ImGui::SliderFloat3("Model Rotation", &m->rotateFloats[0], 0.0f, 360.0f);
                    ImGui::PopID();
 
-                   if (m.mixVal == 0.0f) {
+                   if (m->mixVal == 0.0f) {
                        ImGui::Text("Color:");
-                       ImGui::PushID(&m.color);
+                       ImGui::PushID(&m->color);
                        ImGui::SameLine(); HelpMarker(
                                "Click on the color square to open a color picker.\n"
                                "CTRL+click on individual component to input value.\n");
-                       ImGui::ColorEdit3("Mesh color", (float*)&m.color);
+                       ImGui::ColorEdit3("Mesh color", (float*)&m->color);
                        ImGui::PopID();
                    }
 
@@ -500,10 +503,10 @@ int main()
         }
         ImGui::End();
 
-        ourShader.use();
-        ourShader.set1DFloat("scale", scale);
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        meshShader.use();
+        meshShader.set1DFloat("scale", scale);
+        meshShader.setMat4("projection", projection);
+        meshShader.setMat4("view", view);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -533,7 +536,7 @@ int main()
     glDeleteVertexArrays(1, &quadVAO);
     glDeleteBuffers(1, &quadVBO);
 
-    ourShader.destroy();
+    meshShader.destroy();
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     // Cleanup
