@@ -20,7 +20,7 @@
 #include "utils/imgui-layer/GuiLayer.h"
 #include "utils/shader-manager/Shader.h"
 #include "camera/Camera.h"
-#include "mesh/Scene.h"
+#include "mesh/Model.h"
 
 #include <iostream>
 #include <windows.h>
@@ -102,7 +102,7 @@ int main()
             1.0f, -1.0f,  1.0f, 0.0f,
             1.0f,  1.0f,  1.0f, 1.0f
     };
-    Scene scene;
+    Model scene;
     ImGui::FileBrowser fileDialog;
     // (optional) set browser properties
     fileDialog.SetTitle("Select Mesh");
@@ -150,6 +150,8 @@ int main()
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+
+    std::vector<Model> scenes;
 
 
 
@@ -222,17 +224,31 @@ int main()
         }
         view = glm::lookAt(camera.pos, camera.pos + camera.front, camera.up);
 
-        for (Mesh &m : scene.meshes) {
+        for (int i = 0; i < scenes.size(); i++) {
             // calculate the model matrix for each object and pass it to shader before drawing
-//            model = glm::translate(model, cubePositions[i]);
-//            float angle = 20.0f * i;
-            ourShader.setMat4("model", m.modelMatrix);
-            ourShader.set3DFloat("scaleAxes", m.scaleAxes.x, m.scaleAxes.y, m.scaleAxes.z);
-            ourShader.set4DFloat("color",  m.color.x, m.color.y, m.color.z, m.color.w);
-            ourShader.set1DFloat("scale", m.uniformScale);
-            scene.Draw(ourShader);
-        }
+            scenes[i].modelMatrix = glm::translate(glm::mat4(1.0f), scenes[i].pos);
 
+            scenes[i].modelMatrix =  scenes[i].modelMatrix * (
+                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i].rotateFloats.x), glm::vec3(1.0,0.0f,0.0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i].rotateFloats.y), glm::vec3(0.0,1.0f,0.0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i].rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
+                    );
+
+            ourShader.setMat4("model", scenes[i].modelMatrix);
+            ourShader.set3DFloat("scaleAxes", scenes[i].scaleAxes.x, scenes[i].scaleAxes.y, scenes[i].scaleAxes.z);
+            ourShader.set4DFloat("color",  scenes[i].color.x, scenes[i].color.y, scenes[i].color.z, scenes[i].color.w);
+            ourShader.set1DFloat("scale", scenes[i].uniformScale);
+
+            if (scenes[i].meshes[0].textures.empty()) {
+                scenes[i].mixVal = 0.0f;
+                ourShader.set1DFloat("mixVal", scenes[i].mixVal);
+            } else {
+                scenes[i].mixVal = 1.0f;
+                ourShader.set1DFloat("mixVal", scenes[i].mixVal);
+            }
+
+            scenes[i].Draw(ourShader);
+        }
 
 
         // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
@@ -298,9 +314,10 @@ int main()
             ImGui::EndPopup();
         }
 
-        ImGui::Begin("Scene Objects");
+        ImGui::Begin("Model Objects");
         {
-            for (std::vector<Mesh>::iterator it = scene.meshes.begin() ; it != scene.meshes.end();) {
+            for (std::vector<Model>::iterator it = scenes.begin() ; it != scenes.end();) {
+                std::cout << it->modelName << std::endl;
                 ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_None;
                 ImGui::TreeNodeEx("Field", flags,  it->modelName.c_str());
                 if (ImGui::IsItemClicked()) {
@@ -310,7 +327,7 @@ int main()
                 ImGui::SameLine();
                 if (ImGui::Button("Delete")) {
                     std::cout << "Delete mesh" << std::endl;
-                    it = scene.meshes.erase(it);
+                    it = scenes.erase(it);
                 } else {
                     ++it;
                 }
@@ -328,13 +345,13 @@ int main()
 
 
                 if (ImGui::Button("Cube")) {
-                    scene.loadModel("../assets/models/primitives/cube.obj");
+                    scenes.push_back(Model("../assets/models/primitives/cube/cube.obj"));
                 }
                 if (ImGui::Button("Cylinder")) {
-                    scene.loadModel("../assets/models/primitives/cylinder.obj");
+                    scenes.push_back(Model("../assets/models/primitives/cylinder.obj"));
                 }
                 if (ImGui::Button("Plane")) {
-                    scene.loadModel("../assets/models/primitives/plane.obj");
+                    scenes.push_back(Model("../assets/models/primitives/plane.obj"));
                 }
                 if (ImGui::Button("Import")) {
                     fileDialog.Open();
@@ -355,7 +372,8 @@ int main()
 
             if (fileDialog.HasSelected()) {
                 std::cout << "Selected filename" << fileDialog.GetSelected().string() << std::endl;
-                scene.loadModel(fileDialog.GetSelected().string());
+                Model m = Model(fileDialog.GetSelected().string());
+                scenes.push_back(m);
                 fileDialog.ClearSelected();
             }
 
@@ -364,26 +382,37 @@ int main()
 
         ImGui::Begin("Mesh Properties");
         {
-           for (int i = 0; i < scene.meshes.size(); i++) {
-               if (scene.meshes[i].selected) {
+           for (Model & m: scenes) {
+               if (m.selected) {
                    ImGui::Text("Mesh Name: ");
                    ImGui::SameLine();
-                   ImGui::Text(scene.meshes[i].modelName.c_str());
-                   ImGui::PushID(i);
-                   ImGui::SliderFloat("Uniform Scale", &scene.meshes[i].uniformScale, 1.0f, 20.0f);
+                   ImGui::Text(m.modelName.c_str());
+
+                   ImGui::PushID(&m.uniformScale);
+                   ImGui::SliderFloat("Uniform Scale", &m.uniformScale, 1.0f, 20.0f);
                    ImGui::PopID();
 
-                   ImGui::PushID(&scene.meshes[i].scaleAxes[0]);
-                   ImGui::SliderFloat3("Axis Scale", &scene.meshes[i].scaleAxes[0], 0.0f, 10.0f);
+                   ImGui::PushID(&m.scaleAxes[0]);
+                   ImGui::SliderFloat3("Axis Scale", &m.scaleAxes[0], 0.0f, 10.0f);
                    ImGui::PopID();
 
-                   ImGui::Text("Color:");
-                   ImGui::PushID(&scene.meshes[i].color);
-                   ImGui::SameLine(); HelpMarker(
-                           "Click on the color square to open a color picker.\n"
-                           "CTRL+click on individual component to input value.\n");
-                   ImGui::ColorEdit3("Mesh color", (float*)&scene.meshes[i].color);
+                   ImGui::PushID(&m.modelMatrix);
+                   ImGui::SliderFloat3("Model Position", &m.pos[0], -100.0f, 100.0f);
                    ImGui::PopID();
+
+                   ImGui::PushID(&m.rotateFloats[0]);
+                   ImGui::SliderFloat3("Model Rotation", &m.rotateFloats[0], 0.0f, 360.0f);
+                   ImGui::PopID();
+
+                   if (m.mixVal == 0.0f) {
+                       ImGui::Text("Color:");
+                       ImGui::PushID(&m.color);
+                       ImGui::SameLine(); HelpMarker(
+                               "Click on the color square to open a color picker.\n"
+                               "CTRL+click on individual component to input value.\n");
+                       ImGui::ColorEdit3("Mesh color", (float*)&m.color);
+                       ImGui::PopID();
+                   }
 
                }
            }
@@ -429,7 +458,7 @@ int main()
         }
         ImGui::End();
 
-        ImGui::Begin("Scene");
+        ImGui::Begin("Model");
         {
             // Using a Child allow to fill all the space of the window.
             // It also alows customization

@@ -2,8 +2,8 @@
 // Created by keega on 6/10/2021.
 //
 
-#ifndef FORGE_SCENE_H
-#define FORGE_SCENE_H
+#ifndef FORGE_MODEL_H
+#define FORGE_MODEL_H
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -14,24 +14,42 @@
 
 
 
-class Scene {
+class Model {
 public:
     // model data
     std::vector<Mesh> meshes;
     std::string directory;
     std::vector<Texture> textures_loaded;
     bool gammaCorrection;
+    std::string modelName;
+    bool selected = false;
+    glm::mat4 modelMatrix;
+    glm::vec3 rotateFloats;
+    float uniformScale;
+    float mixVal;
+    glm::vec3 scaleAxes;
+    glm::vec3 pos;
+    glm::vec4 color;
 
-    Scene () {}
+    Model () {}
 
-    Scene(std::string const &path, bool gamma = false) : gammaCorrection(gamma) {
+    Model(std::string const &path, bool gamma = false) : gammaCorrection(gamma) {
         loadModel(path);
+        this->selected = false;
+        this->pos = glm::vec3(0.0f, 0.0f, 0.0f);
+        this->modelMatrix = glm::mat4(1.0f);
+        this->rotateFloats = glm::vec3(0.0f, 0.0f, 0.0f);
+        this->scaleAxes = glm::vec3(1.0f, 1.0f, 1.0f);
+        this->uniformScale = 1.0f;
+        this->color = glm::vec4(1.0, 0.0, 0.0, 1.0);
     }
+
     void Draw(Shader &shader) {
         for (unsigned int i = 0; i < meshes.size(); i++) {
             meshes[i].Draw(shader);
         }
     }
+
 
     void loadModel(std::string const &path) {
         Assimp::Importer import;
@@ -40,7 +58,8 @@ public:
             std::cout << "ERROR::ASSIMP::" << import.GetErrorString() << std::endl;
             return ;
         }
-        directory = path.substr(0, path.find_last_of('/'));
+        this->directory = path.substr(0, path.find_last_of("/\\"));
+        this->modelName = path.substr(path.find_last_of("/\\")+1);
 
         processNode(scene->mRootNode, scene);
     }
@@ -140,7 +159,6 @@ private:
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
         // return a mesh object created from the extracted mesh data
-        std::string modelName = directory.substr(directory.find_last_of('/') + 1);
         return Mesh(vertices, indices, textures, modelName);
     }
 
@@ -163,6 +181,7 @@ private:
             if(!skip)
             {   // if texture hasn't been loaded already, load it
                 Texture texture;
+
                 texture.id = TextureFromFile(str.C_Str(), this->directory, false);
                 texture.type = typeName;
                 texture.path = str.C_Str();
@@ -175,7 +194,7 @@ private:
     unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma)
     {
         std::string filename = std::string(path);
-        filename = directory + '/' + filename;
+        filename = directory + "\\" + filename;
 
         unsigned int textureID;
         glGenTextures(1, &textureID);
@@ -214,4 +233,4 @@ private:
 };
 
 
-#endif //FORGE_SCENE_H
+#endif //FORGE_MODEL_H
