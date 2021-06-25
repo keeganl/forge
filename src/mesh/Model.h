@@ -19,9 +19,9 @@ public:
     // model data
     std::vector<Mesh> meshes;
     std::string directory;
+    std::string objectType;
     std::vector<Texture> textures_loaded;
     bool gammaCorrection;
-    bool isLight;
     std::string modelName;
     bool selected = false;
     glm::mat4 modelMatrix;
@@ -34,7 +34,7 @@ public:
 
     Model () {}
 
-    Model(std::string const &path, bool gamma = false, bool light = false) : gammaCorrection(gamma), isLight(light) {
+    Model(std::string const &path, bool gamma = false, std::string const &type = "model", glm::vec4 const &objColor = glm::vec4(1.0, 0.0, 0.0, 1.0)) : gammaCorrection(gamma), objectType(type), color(objColor) {
         loadModel(path);
         this->selected = false;
         this->pos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -42,11 +42,6 @@ public:
         this->rotateFloats = glm::vec3(0.0f, 0.0f, 0.0f);
         this->scaleAxes = glm::vec3(1.0f, 1.0f, 1.0f);
         this->uniformScale = 1.0f;
-        if (light) {
-            this->color = glm::vec4(1.0, 1.0, 1.0, 1.0);
-        } else {
-            this->color = glm::vec4(1.0, 0.0, 0.0, 1.0);
-        }
     }
 
     void Draw(Shader &shader) {

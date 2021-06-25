@@ -128,6 +128,7 @@ int main()
     // -------------------------------------------------------------------------------------------
 
     meshShader.use();
+    lightShader.use();
     screenShader.setInt("screenTexture", 0);
 
     GuiLayer::createContext(window);
@@ -151,16 +152,14 @@ int main()
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
-    std::vector<std::unique_ptr<Model>> scenes;
-
-
-
+    std::vector<Model*> scenes;
 
     Camera camera = Camera();
 
     glm::vec3 initialCamPos = camera.pos;
 
     meshShader.use();
+    lightShader.use();
 
 
     // framebuffer configuration
@@ -235,9 +234,13 @@ int main()
                     );
 
             meshShader.setMat4("model", scenes[i]->modelMatrix);
+            meshShader.setMat4("projection", projection);
+            meshShader.setMat4("view", view);
+
             meshShader.set3DFloat("scaleAxes", scenes[i]->scaleAxes.x, scenes[i]->scaleAxes.y, scenes[i]->scaleAxes.z);
-            meshShader.set4DFloat("color", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z, scenes[i]->color.w);
+            meshShader.set3DFloat("objectColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
             meshShader.set1DFloat("scale", scenes[i]->uniformScale);
+
 
             if (scenes[i]->meshes[0].textures.empty()) {
                 scenes[i]->mixVal = 0.0f;
@@ -247,9 +250,22 @@ int main()
                 meshShader.set1DFloat("mixVal", scenes[i]->mixVal);
             }
 
-            if (scenes[i]->isLight) {
+
+            if (scenes[i]->objectType == "light") {
+                float val = 1.0f;
+                meshShader.set3DFloat("lightPos", scenes[i]->pos.x, scenes[i]->pos.y, scenes[i]->pos.z);
+                meshShader.set3DFloat("lightColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
+                meshShader.set3DFloat("viewPos", camera.pos.x, camera.pos.y, camera.pos.z);
+
+                lightShader.setMat4("model", scenes[i]->modelMatrix);
+                lightShader.setMat4("view", view);
+                lightShader.setMat4("projection", projection);
+                lightShader.set3DFloat("objectColor",val,val,val);
+                lightShader.set3DFloat("lightColor", val,val,val);
+
                 scenes[i]->Draw(lightShader);
             } else {
+
                 scenes[i]->Draw(meshShader);
             }
         }
@@ -346,16 +362,16 @@ int main()
 
 
                 if (ImGui::Button("Cube")) {
-                    scenes.push_back(std::make_unique<Model>("../assets/models/primitives/cube/cube.obj"));
+                    scenes.push_back(new Model("../assets/models/primitives/cube/cube.obj"));
                 }
                 if (ImGui::Button("Cylinder")) {
-                    scenes.push_back(std::make_unique<Model>("../assets/models/primitives/cylinder.obj"));
+                    scenes.push_back(new Model("../assets/models/primitives/cylinder.obj"));
                 }
                 if (ImGui::Button("Plane")) {
-                    scenes.push_back(std::make_unique<Model>("../assets/models/primitives/plane.obj"));
+                    scenes.push_back(new Model("../assets/models/primitives/plane.obj"));
                 }
                 if (ImGui::Button("Light")) {
-                    scenes.push_back(std::make_unique<Model>("../assets/models/primitives/cube/cube.obj", false, true));
+                    scenes.push_back(new Light("../assets/models/primitives/cube/cube.obj", false));
                 }
                 if (ImGui::Button("Import")) {
                     fileDialog.Open();
@@ -376,7 +392,7 @@ int main()
 
             if (fileDialog.HasSelected()) {
                 std::cout << "Selected filename" << fileDialog.GetSelected().string() << std::endl;
-                scenes.push_back(std::make_unique<Model>(fileDialog.GetSelected().string()));
+                scenes.push_back(new Model(fileDialog.GetSelected().string()));
                 fileDialog.ClearSelected();
             }
 
@@ -503,10 +519,9 @@ int main()
         }
         ImGui::End();
 
+        lightShader.use();
         meshShader.use();
-        meshShader.set1DFloat("scale", scale);
-        meshShader.setMat4("projection", projection);
-        meshShader.setMat4("view", view);
+
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -537,6 +552,8 @@ int main()
     glDeleteBuffers(1, &quadVBO);
 
     meshShader.destroy();
+    lightShader.destroy();
+    screenShader.destroy();
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     // Cleanup

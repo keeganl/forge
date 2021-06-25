@@ -16,6 +16,8 @@ public:
     float diffuse;
     float ambient;
 
+    Light(std::string const &path, bool gamma = false, std::string const &type = "light", glm::vec4 const &objColor = glm::vec4(1.0, 1.0, 1.0, 1.0)) : Model(path, gamma, type, objColor) {}
+
 };
 
 
