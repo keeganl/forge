@@ -22,6 +22,7 @@
 #include "camera/Camera.h"
 #include "mesh/Model.h"
 #include "light/Light.h"
+#include "asset-browser/AssetBrowser.h"
 
 #include <iostream>
 #include <windows.h>
@@ -49,10 +50,71 @@ static void HelpMarker(const char* desc)
     }
 }
 
+void showSettings(bool* p_open)
+{
+    if (!ImGui::Begin("About Dear ImGui", p_open))
+    {
+        ImGui::End();
+        return;
+    }
+    ImGui::Text("Dear ImGui %s", ImGui::GetVersion());
+    ImGui::Separator();
+    ImGui::Text("By Omar Cornut and all Dear ImGui contributors.");
+    ImGui::Text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.");
+
+    ImGui::End();
+}
+
+bool checkLights(std::vector<std::shared_ptr<Model>> const &scenes) {
+    bool res = false;
+    for (std::shared_ptr<Model> m : scenes) {
+        if (m->objectType == "light") {
+            res = true;
+        }
+    }
+    return res;
+}
+
+// Simple helper function to load an image into a OpenGL texture with common settings
+bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
+{
+    // Load from file
+    int image_width = 0;
+    int image_height = 0;
+    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+    if (image_data == NULL)
+        return false;
+
+    // Create a OpenGL texture identifier
+    GLuint image_texture;
+    glGenTextures(1, &image_texture);
+    glBindTexture(GL_TEXTURE_2D, image_texture);
+
+    // Setup filtering parameters for display
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+
+    // Upload pixels into texture
+#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+    stbi_image_free(image_data);
+
+    *out_texture = image_texture;
+    *out_width = image_width;
+    *out_height = image_height;
+
+    return true;
+}
 
 
 int main()
 {
+    bool useMultiSampling = false;
+    int sampleCount = 8;
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -88,6 +150,10 @@ int main()
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
+    if (useMultiSampling) {
+        glEnable(GL_MULTISAMPLE);
+    }
+
     // build and compile our shader program
     // ------------------------------------
     Shader meshShader("../shaders/vert.glsl", "../shaders/frag.glsl");
@@ -104,7 +170,6 @@ int main()
             1.0f, -1.0f,  1.0f, 0.0f,
             1.0f,  1.0f,  1.0f, 1.0f
     };
-    Model scene;
     ImGui::FileBrowser fileDialog;
     // (optional) set browser properties
     fileDialog.SetTitle("Select Mesh");
@@ -133,6 +198,23 @@ int main()
 
     GuiLayer::createContext(window);
 
+    int my_image_width = 0;
+    int my_image_height = 0;
+    GLuint my_image_texture = 0;
+    bool ret = LoadTextureFromFile("../assets/editor/folder.png", &my_image_texture, &my_image_width, &my_image_height);
+    IM_ASSERT(ret);
+
+    int my_image_width2 = 0;
+    int my_image_height2 = 0;
+    GLuint my_image_texture2 = 0;
+    bool ret2 = LoadTextureFromFile("../assets/editor/file.png", &my_image_texture2, &my_image_width2, &my_image_height2);
+    IM_ASSERT(ret2);
+
+    int back_arrow_width = 0;
+    int back_arrow_height = 0;
+    GLuint back_arrow_texture = 0;
+    bool back_arrow_ret = LoadTextureFromFile("../assets/editor/back_arrow.png", &back_arrow_texture, &back_arrow_width, &back_arrow_height);
+    IM_ASSERT(back_arrow_ret);
 
     // Our state
     [[maybe_unused]] bool show_demo_window = true;
@@ -141,6 +223,7 @@ int main()
     float nearClipping = 0.1f;
     float farClipping = 1000.0f;
     bool orthographic = false;
+    bool showSettingsWindow = false;
     int w = 87;
     int a = 65;
     int s = 83;
@@ -151,8 +234,11 @@ int main()
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+    std::filesystem::path startingDirectory = "C:\\Users\\keega\\Desktop\\school\\grad\\research\\forge\\assets";
+    std::filesystem::path currentDirectory = "C:\\Users\\keega\\Desktop\\school\\grad\\research\\forge\\assets";
 
-    std::vector<Model*> scenes;
+
+    std::vector<std::shared_ptr<Model>> scenes;
 
     Camera camera = Camera();
 
@@ -197,6 +283,9 @@ int main()
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+        if (useMultiSampling) {
+            glfwWindowHint(GLFW_SAMPLES, sampleCount);
+        }
 
         // input
         // -----
@@ -208,11 +297,16 @@ int main()
         // bind to framebuffer and draw scene as we normally would to color texture
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+        if (useMultiSampling) {
+            glEnable(GL_MULTISAMPLE);
+        }
 
-
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
 
+        if (scenes.size() == 0) {
+            scenes.clear();
+        }
 
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
@@ -250,24 +344,33 @@ int main()
                 meshShader.set1DFloat("mixVal", scenes[i]->mixVal);
             }
 
-
-            if (scenes[i]->objectType == "light") {
-                float val = 1.0f;
-                meshShader.set3DFloat("lightPos", scenes[i]->pos.x, scenes[i]->pos.y, scenes[i]->pos.z);
-                meshShader.set3DFloat("lightColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
+            if (!checkLights(scenes)) {
+                float reset = 0;
+                meshShader.set3DFloat("lightPos",reset, reset, reset);
+                meshShader.set3DFloat("lightColor", reset, reset, reset);
                 meshShader.set3DFloat("viewPos", camera.pos.x, camera.pos.y, camera.pos.z);
-
-                lightShader.setMat4("model", scenes[i]->modelMatrix);
-                lightShader.setMat4("view", view);
-                lightShader.setMat4("projection", projection);
-                lightShader.set3DFloat("objectColor",val,val,val);
-                lightShader.set3DFloat("lightColor", val,val,val);
-
-                scenes[i]->Draw(lightShader);
             } else {
+                if (scenes[i]->objectType == "light") {
+                    float val = 1.0f;
+                    meshShader.set3DFloat("lightPos", scenes[i]->pos.x, scenes[i]->pos.y, scenes[i]->pos.z);
+                    meshShader.set3DFloat("lightColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
+                    meshShader.set3DFloat("viewPos", camera.pos.x, camera.pos.y, camera.pos.z);
 
-                scenes[i]->Draw(meshShader);
+                    lightShader.setMat4("model", scenes[i]->modelMatrix);
+                    lightShader.setMat4("view", view);
+                    lightShader.setMat4("projection", projection);
+                    lightShader.set3DFloat("objectColor",val,val,val);
+                    lightShader.set3DFloat("lightColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
+
+                    scenes[i]->Draw(lightShader);
+                } else {
+                    scenes[i]->Draw(meshShader);
+                }
             }
+
+
+
+
         }
 
 
@@ -293,27 +396,21 @@ int main()
         ImGui::ShowMetricsWindow(&show_demo_window);
         ImGui::ShowDemoWindow(&show_demo_window);
 
+        if (showSettingsWindow)         { showSettings(&showSettingsWindow); }
+
         // menu bar
         {
             if (ImGui::BeginMainMenuBar())
             {
                 if (ImGui::BeginMenu("File"))
                 {
-                    if(ImGui::Button("Settings")) {
-
-                        std::cout << "opening settings modal" << std::endl;
-                        ImGui::OpenPopup("s");
-                    }
+                    ImGui::MenuItem("Settings", NULL, &showSettingsWindow);
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Edit"))
                 {
                     if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
                     if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
-                    ImGui::Separator();
-                    if (ImGui::MenuItem("Cut", "CTRL+X")) {}
-                    if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-                    if (ImGui::MenuItem("Paste", "CTRL+V")) {}
                     ImGui::EndMenu();
                 }
                 ImGui::EndMainMenuBar();
@@ -321,7 +418,7 @@ int main()
 
         }
 
-        if (ImGui::BeginPopupModal("s", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal("aaaaa", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::Text("Settings");
             ImGui::Separator();
@@ -334,7 +431,7 @@ int main()
             ImGui::EndPopup();
         }
 
-        ImGui::Begin("Model Objects");
+        ImGui::Begin("Scene Objects");
         {
             for (int i = 0; i < scenes.size(); i++) {
                 ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_None;
@@ -362,16 +459,16 @@ int main()
 
 
                 if (ImGui::Button("Cube")) {
-                    scenes.push_back(new Model("../assets/models/primitives/cube/cube.obj"));
+                    scenes.push_back(std::make_shared<Model>("../assets/models/primitives/cube/cube.obj"));
                 }
                 if (ImGui::Button("Cylinder")) {
-                    scenes.push_back(new Model("../assets/models/primitives/cylinder.obj"));
+                    scenes.push_back(std::make_shared<Model>("../assets/models/primitives/cylinder.obj"));
                 }
                 if (ImGui::Button("Plane")) {
-                    scenes.push_back(new Model("../assets/models/primitives/plane.obj"));
+                    scenes.push_back(std::make_shared<Model>("../assets/models/primitives/plane.obj"));
                 }
                 if (ImGui::Button("Light")) {
-                    scenes.push_back(new Light("../assets/models/primitives/cube/cube.obj", false));
+                    scenes.push_back(std::make_shared<Light>("../assets/models/primitives/cube/cube.obj", false));
                 }
                 if (ImGui::Button("Import")) {
                     fileDialog.Open();
@@ -390,14 +487,82 @@ int main()
 
             fileDialog.Display();
 
-            if (fileDialog.HasSelected()) {
+            if (fileDialog.HasSelected())
+            {
                 std::cout << "Selected filename" << fileDialog.GetSelected().string() << std::endl;
-                scenes.push_back(new Model(fileDialog.GetSelected().string()));
+                scenes.push_back(std::make_shared<Model>(fileDialog.GetSelected().string()));
                 fileDialog.ClearSelected();
             }
 
 
         }
+
+        ImGui::Begin("Asset Browser");
+        {
+            int i = 0;
+            ImGuiStyle& style = ImGui::GetStyle();
+            ImVec2 button_sz(40, 40);
+            float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+
+            if (currentDirectory != startingDirectory) {
+                if (ImGui::ImageButton((void *) (intptr_t) back_arrow_texture, ImVec2(20, 20))) {
+                    currentDirectory = currentDirectory.parent_path();
+                }
+            }
+            // layout example
+//            for (int n = 0; n < buttons_count; n++)
+//            {
+//                ImGui::PushID(n);
+//                ImGui::Button("Box", button_sz);
+//                float last_button_x2 = ImGui::GetItemRectMax().x;
+//                float next_button_x2 = last_button_x2 + style.ItemSpacing.x + button_sz.x; // Expected position if next button was on same line
+//                if (n + 1 < buttons_count && next_button_x2 < window_visible_x2)
+//                    ImGui::SameLine();
+//                ImGui::PopID();
+//            }
+
+
+
+            for(auto& p: std::filesystem::directory_iterator(currentDirectory))
+            {
+                auto relativePath = std::filesystem::relative(p.path(), startingDirectory).filename();
+                ImGuiStyle& style = ImGui::GetStyle();
+                float last_button_x2 = ImGui::GetItemRectMax().x;
+                float next_button_x2 = last_button_x2 + style.ItemSpacing.x + button_sz.x; // Expected position if next button was on same line
+                if (p.is_directory())
+                {
+                    ImGui::BeginGroup();
+                    {
+                        ImGui::PushID(p.path().string().c_str());
+                        if (ImGui::ImageButton((void *) (intptr_t) my_image_texture, button_sz))
+//                    if(ImGui::Button(relativePath.string().c_str()))
+                        {
+                            currentDirectory /= p.path();
+                        }
+                        ImGui::Text(relativePath.string().c_str());
+                        ImGui::PopID();
+                    }
+                    ImGui::EndGroup();
+                    if (i < 5 && next_button_x2 < window_visible_x2)
+                        ImGui::SameLine();
+                } else {
+                    ImGui::BeginGroup();
+                    {
+                        ImGui::PushID(p.path().string().c_str());
+                        ImGui::ImageButton((void *) (intptr_t) my_image_texture2, button_sz);
+                        ImGui::Text(relativePath.string().c_str());
+                        ImGui::PopID();
+                    }
+                    ImGui::EndGroup();
+                    if (i + 1 < 20 && next_button_x2 < window_visible_x2)
+                        ImGui::SameLine();
+                }
+                i++;
+            }
+
+
+        }
+        ImGui::End();
 
         ImGui::Begin("Mesh Properties");
         {
@@ -445,6 +610,7 @@ int main()
             ImGui::SameLine(); HelpMarker(
                     "Perspective is default.\n");
             ImGui::Checkbox("Click here", &orthographic);
+            ImGui::Checkbox("Set MSAA", &useMultiSampling);
             ImGui::SliderFloat("FOV", &camera.fov, 45.0f, 250.0f);
             ImGui::DragFloat3("Camera Pos", &camera.pos[0]);
             if(ImGui::Button("Reset camera")) {
@@ -466,18 +632,10 @@ int main()
             if (ImGui::IsKeyPressed(d)) {
                 camera.pos += frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
             }
-
-
-            if (io.MouseWheel < 0 && camera.fov < 250.0f) {
-                camera.fov = camera.fov + 5.0f;
-            }
-            if (io.MouseWheel > 0 && camera.fov > 45.0f) {
-                camera.fov = camera.fov - 5.0f;
-            }
         }
         ImGui::End();
 
-        ImGui::Begin("Model");
+        ImGui::Begin("Scene");
         {
             // Using a Child allow to fill all the space of the window.
             // It also alows customization
@@ -487,6 +645,12 @@ int main()
             // Because I use the texture from OpenGL, I need to invert the V from the UV.
             ImGui::Image((ImTextureID)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
             if (ImGui::IsWindowHovered()) {
+                if (io.MouseWheel < 0 && camera.fov < 250.0f) {
+                    camera.fov = camera.fov + 5.0f;
+                }
+                if (io.MouseWheel > 0 && camera.fov > 45.0f) {
+                    camera.fov = camera.fov - 5.0f;
+                }
                 //project out of normalized coords
                 //std::cout << "Hovering scene tab" << std::endl;
             }
@@ -554,6 +718,7 @@ int main()
     meshShader.destroy();
     lightShader.destroy();
     screenShader.destroy();
+    scenes.clear();
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     // Cleanup
