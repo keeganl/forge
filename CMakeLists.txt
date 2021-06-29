@@ -8,6 +8,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glfw" "glfw")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/yaml-cpp" "yaml-cpp")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/assimp" "assimp")
 
 
@@ -36,6 +37,7 @@ add_executable(forge
         external/imgui/ImGradient.cpp
         external/imgui/ImGuizmo.h
         external/imgui/ImGuizmo.cpp
+        external/imgui/imfilebrowser.h
         external/stb/stb_image.h
         external/entt/single_include/entt/entt.hpp
         src/utils/imgui-layer/GuiLayer.cpp
@@ -47,11 +49,9 @@ add_executable(forge
         src/mesh/helpers/Vertex.h
         src/mesh/helpers/Texture.h
         src/mesh/Mesh.h
-        src/mesh/Mesh.cpp
         src/renderer/OpenGLRenderer.cpp
         src/renderer/OpenGLRenderer.h
-        src/mesh/Scene.cpp
-        src/mesh/Scene.h)
+        src/mesh/Model.h external/imgui/imfilebrowser.h src/light/Light.cpp src/light/Light.h src/asset-browser/AssetBrowser.cpp src/asset-browser/AssetBrowser.h src/utils/Serializer.cpp src/utils/Serializer.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")
@@ -60,5 +60,5 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glm" "glm")
 target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
 
-target_link_libraries(forge glfw ${GLFW_LIBRARIES} glm assimp)
+target_link_libraries(forge glfw ${GLFW_LIBRARIES} yaml-cpp glm assimp)
 
