@@ -23,6 +23,7 @@
 #include "mesh/Model.h"
 #include "light/Light.h"
 #include "asset-browser/AssetBrowser.h"
+#include "utils/Serializer.h"
 
 #include <iostream>
 #include <windows.h>
@@ -63,6 +64,13 @@ void showSettings(bool* p_open)
     ImGui::Text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.");
 
     ImGui::End();
+}
+
+static void Strtrim(char* s) {
+    char* str_end = s + strlen(s);
+    while (str_end > s && str_end[-1] == ' ')
+        str_end--;
+    *str_end = 0;
 }
 
 bool checkLights(std::vector<std::shared_ptr<Model>> const &scenes) {
@@ -224,6 +232,9 @@ int main()
     float farClipping = 1000.0f;
     bool orthographic = false;
     bool showSettingsWindow = false;
+    bool openScene = false;
+    bool saveScene = false;
+    bool openpopup = false;
     int w = 87;
     int a = 65;
     int s = 83;
@@ -303,10 +314,6 @@ int main()
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
-
-        if (scenes.size() == 0) {
-            scenes.clear();
-        }
 
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
@@ -404,6 +411,10 @@ int main()
             {
                 if (ImGui::BeginMenu("File"))
                 {
+                    ImGui::MenuItem("Open Scene", NULL, &openScene);
+                    if(ImGui::MenuItem("Save Scene")) {
+                        openpopup = true;
+                    }
                     ImGui::MenuItem("Settings", NULL, &showSettingsWindow);
                     ImGui::EndMenu();
                 }
@@ -416,6 +427,40 @@ int main()
                 ImGui::EndMainMenuBar();
             }
 
+        }
+
+        // this is a workaround for a known bug
+        if (openpopup) {
+            ImGui::OpenPopup("Scene Name");
+            openpopup = false;
+        }
+
+        if (ImGui::BeginPopupModal("Scene Name",  NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            Serializer serializer = Serializer(scenes);
+            char InputBuf[256] = "";
+
+            ImGui::Text("Enter scene filename");
+            ImGui::Separator();
+
+            ImGuiInputTextFlags input_text_flags = ImGuiInputTextFlags_EnterReturnsTrue;
+            if (ImGui::InputText("Scene Name", InputBuf, IM_ARRAYSIZE(InputBuf), input_text_flags))
+            {
+                char* s = InputBuf;
+                Strtrim(s);
+                if (s[0]) {
+                    serializer.Serialize("../assets/examples/" + std::string(s) + ".yml");
+                    ImGui::CloseCurrentPopup();
+                }
+                strcpy(s, "");
+            }
+
+
+            if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            ImGui::SameLine();
+//            if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+//            ImGui::SetItemDefaultFocus();
+            ImGui::EndPopup();
         }
 
         if (ImGui::BeginPopupModal("aaaaa", NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -474,10 +519,10 @@ int main()
                     fileDialog.Open();
                 }
 
+                if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+                ImGui::SameLine();
                 if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
                 ImGui::SetItemDefaultFocus();
-                ImGui::SameLine();
-                if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
                 ImGui::EndPopup();
             }
         }
@@ -617,21 +662,6 @@ int main()
                 camera.pos = initialCamPos;
             }
 
-            float frameCamSpeed = camera.speed * deltaTime;
-            if (ImGui::IsKeyPressed(w)) {
-
-                camera.pos += frameCamSpeed * camera.front;
-            }
-            if (ImGui::IsKeyPressed(a)) {
-                camera.pos -= frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
-            }
-            if (ImGui::IsKeyPressed(s)) {
-                camera.pos -= frameCamSpeed * camera.front;
-
-            }
-            if (ImGui::IsKeyPressed(d)) {
-                camera.pos += frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
-            }
         }
         ImGui::End();
 
@@ -650,6 +680,21 @@ int main()
                 }
                 if (io.MouseWheel > 0 && camera.fov > 45.0f) {
                     camera.fov = camera.fov - 5.0f;
+                }
+                float frameCamSpeed = camera.speed * deltaTime;
+                if (ImGui::IsKeyPressed(w)) {
+
+                    camera.pos += frameCamSpeed * camera.front;
+                }
+                if (ImGui::IsKeyPressed(a)) {
+                    camera.pos -= frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
+                }
+                if (ImGui::IsKeyPressed(s)) {
+                    camera.pos -= frameCamSpeed * camera.front;
+
+                }
+                if (ImGui::IsKeyPressed(d)) {
+                    camera.pos += frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
                 }
                 //project out of normalized coords
                 //std::cout << "Hovering scene tab" << std::endl;
