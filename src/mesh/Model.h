@@ -34,14 +34,18 @@ public:
 
     Model () {}
 
-    Model(std::string const &path, bool gamma = false, std::string const &type = "model", glm::vec4 const &objColor = glm::vec4(1.0, 0.0, 0.0, 1.0)) : gammaCorrection(gamma), objectType(type), color(objColor) {
+    Model(std::string const &path,
+          bool gamma = false,
+          std::string const &type = "model",
+          glm::vec4 const &objColor = glm::vec4(1.0, 0.0, 0.0, 1.0),
+          glm::vec3 const &pos = glm::vec3(0.0f, 0.0f, 0.0f),
+          glm::mat4 const &matrix = glm::mat4(1.0f),
+          glm::vec3 const &rotationVals =  glm::vec3(0.0f, 0.0f, 0.0f),
+          glm::vec3 const &scales = glm::vec3(0.0f, 0.0f, 0.0f),
+          float const &scale =1.0f)
+    : gammaCorrection(gamma), objectType(type), color(objColor), pos(pos), modelMatrix(matrix), rotateFloats(rotationVals), scaleAxes(scales), uniformScale(scale) {
         loadModel(path);
         this->selected = false;
-        this->pos = glm::vec3(0.0f, 0.0f, 0.0f);
-        this->modelMatrix = glm::mat4(1.0f);
-        this->rotateFloats = glm::vec3(0.0f, 0.0f, 0.0f);
-        this->scaleAxes = glm::vec3(1.0f, 1.0f, 1.0f);
-        this->uniformScale = 1.0f;
     }
 
     virtual ~Model() = default;

@@ -179,9 +179,13 @@ int main()
             1.0f,  1.0f,  1.0f, 1.0f
     };
     ImGui::FileBrowser fileDialog;
+    ImGui::FileBrowser sceneDialog;
     // (optional) set browser properties
     fileDialog.SetTitle("Select Mesh");
     fileDialog.SetTypeFilters({ ".obj", ".fbx" });
+
+    sceneDialog.SetTitle("Select Scene File");
+    sceneDialog.SetTypeFilters({ ".yml" });
 
 
     // screen quad VAO
@@ -234,7 +238,8 @@ int main()
     bool showSettingsWindow = false;
     bool openScene = false;
     bool saveScene = false;
-    bool openpopup = false;
+    bool openSavePopup = false;
+    bool openFilePopup = false;
     int w = 87;
     int a = 65;
     int s = 83;
@@ -411,9 +416,11 @@ int main()
             {
                 if (ImGui::BeginMenu("File"))
                 {
-                    ImGui::MenuItem("Open Scene", NULL, &openScene);
-                    if(ImGui::MenuItem("Save Scene")) {
-                        openpopup = true;
+                    if(ImGui::MenuItem("Open Scene", "CTRL+O")) {
+                        openFilePopup = true;
+                    }
+                    if(ImGui::MenuItem("Save Scene", "CTRL+S")) {
+                        openSavePopup = true;
                     }
                     ImGui::MenuItem("Settings", NULL, &showSettingsWindow);
                     ImGui::EndMenu();
@@ -430,15 +437,22 @@ int main()
         }
 
         // this is a workaround for a known bug
-        if (openpopup) {
+        if (openSavePopup) {
             ImGui::OpenPopup("Scene Name");
-            openpopup = false;
+            openSavePopup = false;
+        }
+
+        if (openFilePopup) {
+            ImGui::OpenPopup("Open File");
+//            Serializer serializer = Serializer(scenes, camera);
+//            serializer.Deserialize()
+            openFilePopup = false;
         }
 
         if (ImGui::BeginPopupModal("Scene Name",  NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            Serializer serializer = Serializer(scenes);
-            char InputBuf[256] = "";
+            Serializer serializer = Serializer(scenes, camera);
+            char InputBuf[256] = "NewScene";
 
             ImGui::Text("Enter scene filename");
             ImGui::Separator();
@@ -460,6 +474,11 @@ int main()
             ImGui::SameLine();
 //            if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
 //            ImGui::SetItemDefaultFocus();
+            ImGui::EndPopup();
+        }
+
+        if (ImGui::BeginPopupModal("Open File", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            sceneDialog.Open();
             ImGui::EndPopup();
         }
 
@@ -534,9 +553,22 @@ int main()
 
             if (fileDialog.HasSelected())
             {
-                std::cout << "Selected filename" << fileDialog.GetSelected().string() << std::endl;
                 scenes.push_back(std::make_shared<Model>(fileDialog.GetSelected().string()));
                 fileDialog.ClearSelected();
+            }
+
+
+        }
+
+        {
+
+            sceneDialog.Display();
+
+            if (sceneDialog.HasSelected())
+            {
+                Serializer serializer = Serializer(scenes, camera);
+                scenes = serializer.Deserialize(sceneDialog.GetSelected().string());
+                sceneDialog.ClearSelected();
             }
 
 
@@ -781,8 +813,8 @@ int main()
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+//    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+//        glfwSetWindowShouldClose(window, true);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
