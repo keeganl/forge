@@ -22,12 +22,12 @@ TODO:
 - Lights
   - ~~Adding lights and manipulating their position and color~~
   - Different light types
-- Scene management
-  - Save scene  
+- ~~Scene management~~
+  - ~~Save scene~~
     - ~~Setup serializer class~~
-    - Serialize components
+    - ~~Serialize components~~
   - Load scene
-    - Implement deserializer
+    - ~~Implement deserializer~~
 - Skybox
 - Rendering settings
   - MSAA 
