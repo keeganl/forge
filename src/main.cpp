@@ -214,6 +214,7 @@ int main()
 
     GuiLayer::createContext(window);
 
+    // put this into a class
     int my_image_width = 0;
     int my_image_height = 0;
     GLuint my_image_texture = 0;
@@ -232,18 +233,28 @@ int main()
     bool back_arrow_ret = LoadTextureFromFile("../assets/editor/back_arrow.png", &back_arrow_texture, &back_arrow_width, &back_arrow_height);
     IM_ASSERT(back_arrow_ret);
 
+    int yml_width = 0;
+    int yml_height = 0;
+    GLuint yml_texture = 0;
+    bool yml_ret = LoadTextureFromFile("../assets/editor/yml.png", &yml_texture, &yml_width, &yml_height);
+    IM_ASSERT(back_arrow_ret);
+
+
     // Our state
     [[maybe_unused]] bool show_demo_window = true;
 
-    float scale = 1.0f;
-    float nearClipping = 0.1f;
-    float farClipping = 1000.0f;
+    static float scale = 1.0f;
+    static float nearClipping = 0.1f;
+    static float farClipping = 1000.0f;
+    static float padding = 16.0f;
+    static float thumbnailSize = 48.0f;
     bool orthographic = false;
     bool showSettingsWindow = false;
     bool openScene = false;
     bool saveScene = false;
     bool openSavePopup = false;
     bool openFilePopup = false;
+    bool openSettingsPopup = false;
     int w = 87;
     int a = 65;
     int s = 83;
@@ -427,7 +438,9 @@ int main()
                     if(ImGui::MenuItem("Save Scene", "CTRL+S")) {
                         openSavePopup = true;
                     }
-                    ImGui::MenuItem("Settings", NULL, &showSettingsWindow);
+                    if(ImGui::MenuItem("Settings", NULL)) {
+                        openSettingsPopup = true;
+                    }
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Edit"))
@@ -450,6 +463,11 @@ int main()
         if (openFilePopup) {
             ImGui::OpenPopup("Open File");
             openFilePopup = false;
+        }
+
+        if(openSettingsPopup) {
+            ImGui::OpenPopup("Settings");
+            openSettingsPopup = false;
         }
 
         if (ImGui::BeginPopupModal("Scene Name",  NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -485,10 +503,13 @@ int main()
             ImGui::EndPopup();
         }
 
-        if (ImGui::BeginPopupModal("aaaaa", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal("Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::Text("Settings");
             ImGui::Separator();
+
+            ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16, 512);
+            ImGui::SliderFloat("Padding", &padding, 0, 32);
 
 
             if (ImGui::Button("Apply", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
@@ -581,67 +602,59 @@ int main()
 
         ImGui::Begin("Asset Browser");
         {
-            int i = 0;
-            ImGuiStyle& style = ImGui::GetStyle();
-            ImVec2 button_sz(40, 40);
-            float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
 
             if (currentDirectory != startingDirectory) {
                 if (ImGui::ImageButton((void *) (intptr_t) back_arrow_texture, ImVec2(20, 20))) {
                     currentDirectory = currentDirectory.parent_path();
                 }
             }
-            // layout example
-//            for (int n = 0; n < buttons_count; n++)
-//            {
-//                ImGui::PushID(n);
-//                ImGui::Button("Box", button_sz);
-//                float last_button_x2 = ImGui::GetItemRectMax().x;
-//                float next_button_x2 = last_button_x2 + style.ItemSpacing.x + button_sz.x; // Expected position if next button was on same line
-//                if (n + 1 < buttons_count && next_button_x2 < window_visible_x2)
-//                    ImGui::SameLine();
-//                ImGui::PopID();
-//            }
 
+            float cellSize = thumbnailSize + padding;
+
+            float panelWidth = ImGui::GetContentRegionAvail().x;
+            int columnCount = (int)(panelWidth / cellSize);
+            if (columnCount < 1)
+                columnCount = 1;
+
+
+            ImGui::Columns(columnCount, 0, false);
 
 
             for(auto& p: std::filesystem::directory_iterator(currentDirectory))
             {
                 auto relativePath = std::filesystem::relative(p.path(), startingDirectory).filename();
                 ImGuiStyle& style = ImGui::GetStyle();
-                float last_button_x2 = ImGui::GetItemRectMax().x;
-                float next_button_x2 = last_button_x2 + style.ItemSpacing.x + button_sz.x; // Expected position if next button was on same line
                 if (p.is_directory())
                 {
                     ImGui::BeginGroup();
                     {
                         ImGui::PushID(p.path().string().c_str());
-                        if (ImGui::ImageButton((void *) (intptr_t) my_image_texture, button_sz))
-//                    if(ImGui::Button(relativePath.string().c_str()))
+                        if (ImGui::ImageButton((void *) (intptr_t) my_image_texture, { thumbnailSize, thumbnailSize }))
                         {
                             currentDirectory /= p.path();
+                        }
+                        ImGui::TextWrapped(relativePath.string().c_str());
+                        ImGui::PopID();
+                    }
+                    ImGui::EndGroup();
+                } else {
+                    ImGui::BeginGroup();
+                    {
+                        ImGui::PushID(p.path().string().c_str());
+                        if (p.path().string().find(".yml") != std::string::npos) {
+                            ImGui::ImageButton((void *) (intptr_t) yml_texture, { thumbnailSize, thumbnailSize });
+                        } else {
+                            ImGui::ImageButton((void *) (intptr_t) my_image_texture2, { thumbnailSize, thumbnailSize });
                         }
                         ImGui::Text(relativePath.string().c_str());
                         ImGui::PopID();
                     }
                     ImGui::EndGroup();
-                    if (i < 5 && next_button_x2 < window_visible_x2)
-                        ImGui::SameLine();
-                } else {
-                    ImGui::BeginGroup();
-                    {
-                        ImGui::PushID(p.path().string().c_str());
-                        ImGui::ImageButton((void *) (intptr_t) my_image_texture2, button_sz);
-                        ImGui::Text(relativePath.string().c_str());
-                        ImGui::PopID();
-                    }
-                    ImGui::EndGroup();
-                    if (i + 1 < 20 && next_button_x2 < window_visible_x2)
-                        ImGui::SameLine();
                 }
-                i++;
+                ImGui::NextColumn();
             }
 
+            ImGui::Columns(1);
 
         }
         ImGui::End();
