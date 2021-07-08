@@ -83,6 +83,10 @@ bool checkLights(std::vector<std::shared_ptr<Model>> const &scenes) {
     return res;
 }
 
+bool isSelected(std::shared_ptr<Model> const &model) {
+    return model->selected;
+}
+
 // Simple helper function to load an image into a OpenGL texture with common settings
 bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
 {
@@ -244,6 +248,7 @@ int main()
     int a = 65;
     int s = 83;
     int d = 68;
+    int del = 261;
     int one = 49;
     int two = 50;
     int three = 51;
@@ -444,8 +449,6 @@ int main()
 
         if (openFilePopup) {
             ImGui::OpenPopup("Open File");
-//            Serializer serializer = Serializer(scenes, camera);
-//            serializer.Deserialize()
             openFilePopup = false;
         }
 
@@ -498,16 +501,11 @@ int main()
         ImGui::Begin("Scene Objects");
         {
             for (int i = 0; i < scenes.size(); i++) {
-                ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_None;
-                ImGui::TreeNodeEx("Field", flags,  scenes[i]->modelName.c_str());
+                ImGui::AlignTextToFramePadding();
+                ImGui::Selectable(scenes[i]->modelName.c_str(), scenes[i]->selected);
                 if (ImGui::IsItemClicked()) {
                     std::cout << scenes[i]->modelName.c_str() << std::endl;
                     scenes[i]->selected = !scenes[i]->selected;
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Delete")) {
-                    std::cout << "Delete mesh" << std::endl;
-                    scenes.erase(scenes.begin() + i);
                 }
             }
             if(ImGui::Button("Add object")) {
@@ -546,6 +544,13 @@ int main()
             }
         }
         ImGui::End();
+
+        if (ImGui::IsKeyPressed(del)) {
+            std::cout << "delete mesh" << std::endl;
+            scenes.erase(
+                    std::remove_if(scenes.begin(), scenes.end(), isSelected),
+                    scenes.end());
+        }
 
         {
 
