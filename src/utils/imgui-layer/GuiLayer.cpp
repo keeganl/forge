@@ -32,7 +32,7 @@ void GuiLayer::createContext(GLFWwindow *window) {
     // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
     // - Read 'docs/FONTS.md' for more instructions and details.
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    io.Fonts->AddFontFromFileTTF(R"(C:\Users\keega\Desktop\school\grad\research\forge\assets\fonts\fira-sans\FiraSans-Regular.ttf)", 16.0f);
+    io.Fonts->AddFontFromFileTTF(R"(C:\Users\keega\Desktop\school\grad\research\forge\assets\fonts\fira-sans\FiraSans-Regular.ttf)", 11.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
@@ -122,7 +122,8 @@ void GuiLayer::startFrame() {
 
 void GuiLayer::createDockspace() {
     // Create the docking environment
-    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
+    // | ImGuiWindowFlags_NoTitleBar
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking |
                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                                    ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
