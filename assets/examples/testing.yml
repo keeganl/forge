@@ -1,0 +1,22 @@
+Scene: Untitled
+Components:
+  - Model:
+      Index: 0
+      Name: cube.obj
+      ObjectType: model
+      Directory: ../assets/models/primitives/cube
+      Position: [0, 0, 0]
+      Color: [1, 0, 0, 1]
+      ModelMatrix: mat4x4((1.000000, 0.000000, 0.000000, 0.000000), (0.000000, 1.000000, 0.000000, 0.000000), (0.000000, 0.000000, 1.000000, 0.000000), (0.000000, 0.000000, 0.000000, 1.000000))
+      Axis Scale: [1, 1, 1]
+      Rotation Axis Values: [1, 1, 1]
+  - Model:
+      Index: 1
+      Name: cube.obj
+      ObjectType: light
+      Directory: ../assets/models/primitives/cube
+      Position: [0, 0, 0]
+      Color: [1, 1, 1, 1]
+      ModelMatrix: mat4x4((1.000000, 0.000000, 0.000000, 0.000000), (0.000000, 1.000000, 0.000000, 0.000000), (0.000000, 0.000000, 1.000000, 0.000000), (0.000000, 0.000000, 0.000000, 1.000000))
+      Axis Scale: [1, 1, 1]
+      Rotation Axis Values: [1, 1, 1]

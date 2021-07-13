@@ -22,7 +22,6 @@
 #include "camera/Camera.h"
 #include "mesh/Model.h"
 #include "light/Light.h"
-#include "asset-browser/AssetBrowser.h"
 #include "utils/Serializer.h"
 
 #include <iostream>

@@ -49,9 +49,13 @@ add_executable(forge
         src/mesh/helpers/Vertex.h
         src/mesh/helpers/Texture.h
         src/mesh/Mesh.h
-        src/renderer/OpenGLRenderer.cpp
-        src/renderer/OpenGLRenderer.h
-        src/mesh/Model.h external/imgui/imfilebrowser.h src/light/Light.cpp src/light/Light.h src/asset-browser/AssetBrowser.cpp src/asset-browser/AssetBrowser.h src/utils/Serializer.cpp src/utils/Serializer.h)
+        src/renderer/Renderer.cpp
+        src/renderer/Renderer.h
+        src/mesh/Model.h external/imgui/imfilebrowser.h
+        src/light/Light.cpp
+        src/light/Light.h
+        src/utils/Serializer.cpp
+        src/utils/Serializer.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")
