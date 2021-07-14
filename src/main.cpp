@@ -404,6 +404,12 @@ int main()
     // Our state
     [[maybe_unused]] bool show_demo_window = true;
 
+    bool firstMouse = true;
+    float lastX =  800.0f / 2.0;
+    float lastY =  600.0 / 2.0;
+    float yaw   = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
+    float pitch =  0.0f;
+
     static float scale = 1.0f;
     static float nearClipping = 0.1f;
     static float farClipping = 1000.0f;
@@ -896,6 +902,42 @@ int main()
             // Because I use the texture from OpenGL, I need to invert the V from the UV.
             ImGui::Image((ImTextureID)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
             if (ImGui::IsWindowHovered()) {
+
+                {
+                    std::cout <<  io.MousePos.x << "  " << io.MousePos.y << std::endl;
+
+                    if (firstMouse)
+                    {
+                        lastX = io.MousePos.x;
+                        lastY = io.MousePos.y;
+                        firstMouse = false;
+                    }
+
+                    float xoffset = io.MousePos.x - lastX;
+                    float yoffset = lastY - io.MousePos.y; // reversed since y-coordinates go from bottom to top
+                    lastX = io.MousePos.x;
+                    lastY = io.MousePos.y;
+
+                    float sensitivity = 0.1f; // change this value to your liking
+                    xoffset *= sensitivity;
+                    yoffset *= sensitivity;
+
+                    yaw += xoffset;
+                    pitch += yoffset;
+
+                    // make sure that when pitch is out of bounds, screen doesn't get flipped
+                    if (pitch > 89.0f)
+                        pitch = 89.0f;
+                    if (pitch < -89.0f)
+                        pitch = -89.0f;
+
+                    glm::vec3 front;
+                    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+                    front.y = sin(glm::radians(pitch));
+                    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+                    camera.front = glm::normalize(front);
+                }
+
                 if (io.MouseWheel < 0 && camera.fov < 120.0f) {
                     camera.fov = camera.fov + 5.0f;
                 }
