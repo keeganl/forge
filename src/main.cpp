@@ -404,6 +404,7 @@ int main()
     [[maybe_unused]] bool show_demo_window = true;
 
     bool firstMouse = true;
+    float sensitivity = 0.5f; // change this value to your liking
     float lastX =  800.0f / 2.0;
     float lastY =  600.0 / 2.0;
     float yaw   = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
@@ -878,7 +879,8 @@ int main()
             ImGui::Checkbox("Set MSAA", &useMultiSampling);
             ImGui::SliderFloat("FOV", &camera.fov, 45.0f, 120.0f);
             ImGui::DragFloat3("Camera Pos", &camera.pos[0]);
-            ImGui::SliderFloat("Camera Speed", &camera.speed, 1.0f, 10.0f);
+            ImGui::SliderFloat("Camera Speed", &camera.speed, 1.0f, 25.0f);
+            ImGui::SliderFloat("Camera Sensitivity", &sensitivity, 0.1f, 1.0f);
             if(ImGui::Button("Reset camera")) {
                 camera.pos = initialCamPos;
             }
@@ -898,38 +900,74 @@ int main()
             if (ImGui::IsWindowHovered()) {
 
                 {
-                    std::cout <<  io.MousePos.x << "  " << io.MousePos.y << std::endl;
+//                    std::cout <<  io.MousePos.x << "  " << io.MousePos.y << std::endl;
 
-                    if (firstMouse)
-                    {
+                    if ( ImGui::IsMouseDown(0)) {
+                        if (firstMouse)
+                        {
+                            lastX = io.MousePos.x;
+                            lastY = io.MousePos.y;
+                            firstMouse = false;
+                        }
+
+                        float xoffset = io.MousePos.x - lastX;
+                        float yoffset = lastY - io.MousePos.y; // reversed since y-coordinates go from bottom to top
                         lastX = io.MousePos.x;
                         lastY = io.MousePos.y;
-                        firstMouse = false;
+
+
+                        xoffset *= sensitivity;
+                        yoffset *= sensitivity;
+
+                        yaw += xoffset;
+                        pitch += yoffset;
+
+                        // make sure that when pitch is out of bounds, screen doesn't get flipped
+                        if (pitch > 89.0f)
+                            pitch = 89.0f;
+                        if (pitch < -89.0f)
+                            pitch = -89.0f;
+
+                        glm::vec3 front;
+                        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+                        front.y = sin(glm::radians(pitch));
+                        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+                        camera.front = glm::normalize(front);
                     }
 
-                    float xoffset = io.MousePos.x - lastX;
-                    float yoffset = lastY - io.MousePos.y; // reversed since y-coordinates go from bottom to top
-                    lastX = io.MousePos.x;
-                    lastY = io.MousePos.y;
+                    // subtract minimum bound
+                    auto windowSize = ImGui::GetWindowSize();
+                    auto minBound = ImGui::GetWindowPos();
 
-                    float sensitivity = 0.1f; // change this value to your liking
-                    xoffset *= sensitivity;
-                    yoffset *= sensitivity;
+                    ImVec2 maxBound = { minBound.x + windowSize.x, minBound.y + windowSize.y };
+                    ImVec2 min = {minBound.x, minBound.y};
+                    ImVec2 max = {maxBound.x, maxBound.y};
+                    glm::vec2 bounds[2];
+                    bounds[0] = {minBound.x, minBound.y};
+                    bounds[1] = {maxBound.x, maxBound.y};
 
-                    yaw += xoffset;
-                    pitch += yoffset;
+                    float mx = io.MousePos.x;
+                    float my = io.MousePos.y;
+                    mx -= bounds[0].x;
+                    my -= bounds[0].y;
 
-                    // make sure that when pitch is out of bounds, screen doesn't get flipped
-                    if (pitch > 89.0f)
-                        pitch = 89.0f;
-                    if (pitch < -89.0f)
-                        pitch = -89.0f;
+                    glm::vec2 viewportSize = bounds[1] - bounds[0];
 
-                    glm::vec3 front;
-                    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-                    front.y = sin(glm::radians(pitch));
-                    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-                    camera.front = glm::normalize(front);
+                    // flip y to match texture
+                    my = viewportSize.y - my;
+
+                    int mouseX = (int)mx;
+                    int mouseY = (int)my;
+
+
+                    std::cout << mouseX << " " << mouseY << std::endl;
+
+                    glReadBuffer(GL_COLOR_ATTACHMENT1);
+                    int pixelData;
+                    glReadPixels(mouseX, mouseY, 1, 1, GL_R32I, GL_INT, &pixelData);
+
+                    std::cout << "pixelData: " << pixelData << std::endl;
+
                 }
 
                 if (io.MouseWheel < 0 && camera.fov < 120.0f) {
