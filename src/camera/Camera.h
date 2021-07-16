@@ -8,7 +8,7 @@
 // passing the data to imgui
 struct Camera {
     float fov{45.0f};
-    float speed{2.5f};
+    float speed{10.0f};
     glm::vec3 pos{glm::vec3(1.0f, 2.0f, 3.0f)};
     glm::vec3 target{glm::vec3(0.0f, 1.0f, 0.0f)};
     glm::vec3 direction{glm::normalize(glm::vec3(0.0f, 0.0f, 3.0f) - glm::vec3(0.0f, 0.0f, 0.0f))};
