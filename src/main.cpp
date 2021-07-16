@@ -877,7 +877,6 @@ int main()
             ImGui::SameLine(); HelpMarker(
                     "Perspective is default.\n");
             ImGui::Checkbox("Click here", &orthographic);
-            ImGui::Checkbox("Set MSAA", &useMultiSampling);
             ImGui::SliderFloat("FOV", &camera.fov, 45.0f, 120.0f);
             ImGui::DragFloat3("Camera Pos", &camera.pos[0]);
             ImGui::SliderFloat("Camera Speed", &camera.speed, 1.0f, 25.0f);
