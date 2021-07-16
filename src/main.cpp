@@ -681,12 +681,13 @@ int main()
 
             ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16, 512);
             ImGui::SliderFloat("Padding", &padding, 0, 32);
+            ImGui::Checkbox("Set MSAA", &useMultiSampling);
 
 
-            if (ImGui::Button("Apply", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button("Revert", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
             ImGui::SetItemDefaultFocus();
             ImGui::SameLine();
-            if (ImGui::Button("Revert", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button("Apply", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
             ImGui::EndPopup();
         }
 
