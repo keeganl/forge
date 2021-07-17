@@ -537,6 +537,7 @@ int main()
             meshShader.set3DFloat("scaleAxes", scenes[i]->scaleAxes.x, scenes[i]->scaleAxes.y, scenes[i]->scaleAxes.z);
             meshShader.set3DFloat("objectColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
             meshShader.set1DFloat("scale", scenes[i]->uniformScale);
+            meshShader.setInt("objectId", i+1);
 
 
             if (scenes[i]->meshes[0].textures.empty()) {
@@ -951,6 +952,8 @@ int main()
                     // subtract minimum bound
                     auto windowSize = ImGui::GetWindowSize();
                     auto minBound = ImGui::GetWindowPos();
+                    minBound.x = 0;
+                    minBound.y = 0;
 
                     ImVec2 maxBound = { minBound.x + windowSize.x, minBound.y + windowSize.y };
                     ImVec2 min = {minBound.x, minBound.y};
