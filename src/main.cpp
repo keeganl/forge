@@ -426,6 +426,8 @@ int main()
     int a = 65;
     int s = 83;
     int d = 68;
+    int o = 79;
+    int comma = 44;
     int del = 261;
     int one = 49;
     int two = 50;
@@ -611,6 +613,16 @@ int main()
 
         if (showSettingsWindow)         { showSettings(&showSettingsWindow); }
 
+        if(io.KeyCtrl && ImGui::IsKeyPressed(o) && !openFilePopup) {
+            openFilePopup = true;
+        }
+        else if(io.KeyCtrl && ImGui::IsKeyPressed(s) && !openSavePopup) {
+            openSavePopup = true;
+        }
+        else if(io.KeyCtrl && ImGui::IsKeyPressed(comma) && !openSettingsPopup) {
+            openSettingsPopup = true;
+        }
+
         // menu bar
         {
             if (ImGui::BeginMainMenuBar())
@@ -715,7 +727,7 @@ int main()
                     scenes[i]->selected = !scenes[i]->selected;
                 }
             }
-            if(ImGui::Button("Add object")) {
+            if(ImGui::Button("Add object") || (io.KeyShift && ImGui::IsKeyPressed(a))) {
 
                 std::cout << "adding mesh" << std::endl;
                 ImGui::OpenPopup("Add object");
@@ -916,7 +928,7 @@ int main()
                 {
 //                    std::cout <<  io.MousePos.x << "  " << io.MousePos.y << std::endl;
 
-                    if ( ImGui::IsMouseDown(0)) {
+                    if ( ImGui::IsMouseDown(0) && io.KeyShift) {
                         if (firstMouse)
                         {
                             lastX = io.MousePos.x;
