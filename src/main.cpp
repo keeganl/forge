@@ -532,14 +532,6 @@ int main()
                     glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i]->rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
                     );
 
-            meshShader.setMat4("model", scenes[i]->modelMatrix);
-            meshShader.setMat4("projection", projection);
-            meshShader.setMat4("view", view);
-
-            meshShader.set3DFloat("scaleAxes", scenes[i]->scaleAxes.x, scenes[i]->scaleAxes.y, scenes[i]->scaleAxes.z);
-            meshShader.set3DFloat("objectColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
-            meshShader.set1DFloat("scale", scenes[i]->uniformScale);
-            meshShader.setInt("objectId", i+1);
 
 
             if (scenes[i]->meshes[0].textures.empty()) {
@@ -550,6 +542,7 @@ int main()
                 meshShader.set1DFloat("mixVal", scenes[i]->mixVal);
             }
 
+            // update the scene if there are no lights
             if (!checkLights(scenes)) {
                 float reset = 0;
                 meshShader.set3DFloat("lightPos",reset, reset, reset);
@@ -557,19 +550,30 @@ int main()
                 meshShader.set3DFloat("viewPos", camera.pos.x, camera.pos.y, camera.pos.z);
             } else {
                 if (scenes[i]->objectType == "light") {
-                    float val = 1.0f;
+                    meshShader.use();
                     meshShader.set3DFloat("lightPos", scenes[i]->pos.x, scenes[i]->pos.y, scenes[i]->pos.z);
                     meshShader.set3DFloat("lightColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
                     meshShader.set3DFloat("viewPos", camera.pos.x, camera.pos.y, camera.pos.z);
 
+                    lightShader.use();
                     lightShader.setMat4("model", scenes[i]->modelMatrix);
                     lightShader.setMat4("view", view);
                     lightShader.setMat4("projection", projection);
-                    lightShader.set3DFloat("objectColor",val,val,val);
                     lightShader.set3DFloat("lightColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
 
                     scenes[i]->Draw(lightShader);
-                } else {
+                }
+                else if (scenes[i]->objectType == "model"){
+                    meshShader.use();
+                    scenes[i]->modelMatrix = glm::scale(scenes[i]->modelMatrix, scenes[i]->scaleAxes);
+
+                    meshShader.setMat4("model", scenes[i]->modelMatrix);
+                    meshShader.setMat4("projection", projection);
+                    meshShader.setMat4("view", view);
+                    meshShader.set3DFloat("scaleAxes", scenes[i]->scaleAxes.x, scenes[i]->scaleAxes.y, scenes[i]->scaleAxes.z);
+                    meshShader.set3DFloat("objectColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
+                    meshShader.set1DFloat("scale", scenes[i]->uniformScale);
+                    meshShader.setInt("objectId", i);
                     scenes[i]->Draw(meshShader);
                 }
             }
