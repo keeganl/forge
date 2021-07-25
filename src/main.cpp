@@ -120,6 +120,32 @@ bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_wid
     return true;
 }
 
+Mesh saveTexture(ImGui::FileBrowser &textureDialog, Mesh &m) {
+    textureDialog.Open();
+
+    if (textureDialog.HasSelected())
+    {
+        std::string textureFilePath = textureDialog.GetSelected().string();
+
+        Texture texture;
+
+        int new_texture_width = 0;
+        int new_texture_height = 0;
+        GLuint new_texture_texture = 0;
+        bool new_texture_ret = LoadTextureFromFile(textureFilePath.c_str(), &new_texture_texture, &new_texture_width, &new_texture_height);
+        IM_ASSERT(new_texture_ret);
+
+        texture.id = new_texture_texture;
+        texture.path = textureFilePath;
+
+        m.textures.push_back(texture);
+        textureDialog.ClearSelected();
+    }
+
+    return m;
+
+}
+
 unsigned int loadCubemap(std::vector<std::string> faces)
 {
     unsigned int textureID;
