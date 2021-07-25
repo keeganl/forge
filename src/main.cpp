@@ -302,6 +302,7 @@ int main()
             1.0f,  1.0f,  1.0f, 1.0f
     };
     ImGui::FileBrowser fileDialog;
+    ImGui::FileBrowser saveDialog(ImGuiFileBrowserFlags_EnterNewFilename | ImGuiFileBrowserFlags_CreateNewDir);
     ImGui::FileBrowser sceneDialog;
     // (optional) set browser properties
     fileDialog.SetTitle("Select Mesh");
@@ -309,6 +310,12 @@ int main()
 
     sceneDialog.SetTitle("Select Scene File");
     sceneDialog.SetTypeFilters({ ".yml" });
+
+    saveDialog.SetTitle("Save Scene File");
+    saveDialog.SetTypeFilters({ ".yml" });
+
+    textureDialog.SetTitle("Select Texture File");
+    textureDialog.SetTypeFilters({ ".png", ".jpg" });
 
 
     // screen quad VAO
@@ -633,15 +640,9 @@ int main()
             {
                 if (ImGui::BeginMenu("File"))
                 {
-                    if(ImGui::MenuItem("Open Scene", "CTRL+O")) {
-                        openFilePopup = true;
-                    }
-                    if(ImGui::MenuItem("Save Scene", "CTRL+S")) {
-                        openSavePopup = true;
-                    }
-                    if(ImGui::MenuItem("Settings", NULL)) {
-                        openSettingsPopup = true;
-                    }
+                    if(ImGui::MenuItem("Open Scene", "CTRL+O")) { openFilePopup = true; }
+                    if(ImGui::MenuItem("Save Scene", "CTRL+S")) { openSavePopup = true; }
+                    if(ImGui::MenuItem("Settings", NULL)) { openSettingsPopup = true; }
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Edit"))
@@ -657,7 +658,7 @@ int main()
 
         // this is a workaround for a known bug
         if (openSavePopup) {
-            ImGui::OpenPopup("Scene Name");
+            saveDialog.Open();
             openSavePopup = false;
         }
 
@@ -671,33 +672,6 @@ int main()
             openSettingsPopup = false;
         }
 
-        if (ImGui::BeginPopupModal("Scene Name",  NULL, ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            Serializer serializer = Serializer(scenes, camera);
-            char InputBuf[256] = "NewScene";
-
-            ImGui::Text("Enter scene filename");
-            ImGui::Separator();
-
-            ImGuiInputTextFlags input_text_flags = ImGuiInputTextFlags_EnterReturnsTrue;
-            if (ImGui::InputText("Scene Name", InputBuf, IM_ARRAYSIZE(InputBuf), input_text_flags))
-            {
-                char* s = InputBuf;
-                Strtrim(s);
-                if (s[0]) {
-                    serializer.Serialize("../assets/examples/" + std::string(s) + ".yml");
-                    ImGui::CloseCurrentPopup();
-                }
-                strcpy(s, "");
-            }
-
-
-            if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-            ImGui::SameLine();
-//            if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-//            ImGui::SetItemDefaultFocus();
-            ImGui::EndPopup();
-        }
 
         if (ImGui::BeginPopupModal("Open File", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
             sceneDialog.Open();
@@ -789,7 +763,17 @@ int main()
         }
 
         {
+            saveDialog.Display();
 
+            if (saveDialog.HasSelected())
+            {
+                Serializer serializer = Serializer(scenes, camera);
+                serializer.Serialize( saveDialog.GetSelected().string() + ".yml");
+                saveDialog.ClearSelected();
+            }
+        }
+
+        {
             sceneDialog.Display();
 
             if (sceneDialog.HasSelected())
@@ -798,8 +782,6 @@ int main()
                 scenes = serializer.Deserialize(sceneDialog.GetSelected().string());
                 sceneDialog.ClearSelected();
             }
-
-
         }
 
         ImGui::Begin("Asset Browser");
