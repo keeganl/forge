@@ -481,6 +481,7 @@ int main()
 
     std::vector<std::shared_ptr<Model>> scenes;
 
+    glm::vec3 front;
     Camera camera = Camera();
 
     glm::vec3 initialCamPos = camera.pos;
@@ -738,7 +739,7 @@ int main()
                     scenes[i]->selected = !scenes[i]->selected;
                 }
             }
-            if(ImGui::Button("Add object") || (io.KeyShift && ImGui::IsKeyPressed(a))) {
+            if(ImGui::Button("Add object")) {
 
                 std::cout << "adding mesh" << std::endl;
                 ImGui::OpenPopup("Add object");
@@ -1008,6 +1009,12 @@ int main()
 //                    std::cout <<  io.MousePos.x << "  " << io.MousePos.y << std::endl;
 
                     if ( ImGui::IsMouseDown(0) && io.KeyShift) {
+
+                        if((io.KeyShift && ImGui::IsKeyPressed(a))) {
+                            std::cout << "adding mesh" << std::endl;
+                            ImGui::OpenPopup("Add object");
+                        }
+
                         if (firstMouse)
                         {
                             lastX = io.MousePos.x;
@@ -1033,7 +1040,6 @@ int main()
                         if (pitch < -89.0f)
                             pitch = -89.0f;
 
-                        glm::vec3 front;
                         front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
                         front.y = sin(glm::radians(pitch));
                         front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -1043,8 +1049,8 @@ int main()
                     // subtract minimum bound
                     auto windowSize = ImGui::GetWindowSize();
                     auto minBound = ImGui::GetWindowPos();
-                    minBound.x = 0;
-                    minBound.y = 0;
+//                    minBound.x = 0;
+//                    minBound.y = 0;
 
                     ImVec2 maxBound = { minBound.x + windowSize.x, minBound.y + windowSize.y };
                     ImVec2 min = {minBound.x, minBound.y};
@@ -1067,13 +1073,17 @@ int main()
                     int mouseY = (int)my;
 
 
-                    std::cout << mouseX << " " << mouseY << std::endl;
+//                    std::cout << mouseX << " " << mouseY << std::endl;
 
                     glReadBuffer(GL_COLOR_ATTACHMENT1);
                     int pixelData;
                     glReadPixels(mouseX, mouseY, 1, 1, GL_RED_INTEGER, GL_INT, &pixelData);
 
-                    std::cout << "pixelData: " << pixelData << std::endl;
+//                    std::cout << "pixelData: " << pixelData << std::endl;
+
+                    if (ImGui::IsMouseDown(0) && pixelData <= scenes.size()) {
+                        scenes[pixelData]->selected = !scenes[pixelData]->selected;
+                    }
 
                 }
 
