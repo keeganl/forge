@@ -304,6 +304,7 @@ int main()
     ImGui::FileBrowser fileDialog;
     ImGui::FileBrowser saveDialog(ImGuiFileBrowserFlags_EnterNewFilename | ImGuiFileBrowserFlags_CreateNewDir);
     ImGui::FileBrowser sceneDialog;
+    ImGui::FileBrowser textureDialog;
     // (optional) set browser properties
     fileDialog.SetTitle("Select Mesh");
     fileDialog.SetTypeFilters({ ".obj", ".fbx" });
@@ -404,7 +405,13 @@ int main()
     int yml_height = 0;
     GLuint yml_texture = 0;
     bool yml_ret = LoadTextureFromFile("../assets/editor/yml.png", &yml_texture, &yml_width, &yml_height);
-    IM_ASSERT(back_arrow_ret);
+    IM_ASSERT(yml_ret);
+
+    int default_width = 0;
+    int default_height = 0;
+    GLuint default_texture = 0;
+    bool default_ret = LoadTextureFromFile("../assets/editor/no_texture.jpg", &default_texture, &default_width, &default_height);
+    IM_ASSERT(default_ret);
 
 
     // Our state
@@ -843,44 +850,104 @@ int main()
         }
         ImGui::End();
 
-        ImGui::Begin("Mesh Properties");
+        if (scenes.size() > 0)
         {
-           for (auto &m: scenes) {
-               if (m->selected) {
-                   ImGui::Text("Mesh Name: ");
-                   ImGui::SameLine();
-                   ImGui::Text(m->modelName.c_str());
+            ImGui::Begin("Mesh Properties");
+            {
+                int i = 0;
+                for (auto &m: scenes) {
+                    if (m->selected) {
+                       bool tNode = ImGui::TreeNodeEx((void*)"###", ImGuiTreeNodeFlags_DefaultOpen, "%s", m->modelName.c_str());
+                       if (tNode) {
+                           ImGui::PushID(i);
+                           ImGui::AlignTextToFramePadding();
+                           ImGui::Text("Name");
+                           ImGui::SameLine();
+                           ImGui::InputText("", m->modelName.data(), m->modelName.size()+1);
+                           ImGui::PopID();
 
-                   ImGui::PushID(&m->uniformScale);
-                   ImGui::SliderFloat("Uniform Scale", &m->uniformScale, 1.0f, 20.0f);
-                   ImGui::PopID();
 
-                   ImGui::PushID(&m->scaleAxes[0]);
-                   ImGui::SliderFloat3("Axis Scale", &m->scaleAxes[0], 0.0f, 10.0f);
-                   ImGui::PopID();
+                           if (ImGui::CollapsingHeader("Mesh Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+                               ImGui::PushID(&m->uniformScale);
+                               ImGui::AlignTextToFramePadding();
+                               ImGui::Text("Uniform Scale");
+                               ImGui::SameLine();
+                               ImGui::SliderFloat("\t", &m->uniformScale, 1.0f, 20.0f);
+                               ImGui::PopID();
 
-                   ImGui::PushID(&m->modelMatrix);
-                   ImGui::SliderFloat3("Model Position", &m->pos[0], -100.0f, 100.0f);
-                   ImGui::PopID();
+                               ImGui::PushID(&m->scaleAxes[0]);
+                               ImGui::AlignTextToFramePadding();
+                               ImGui::Text("Axis Scale");
+                               ImGui::SameLine();
+                               ImGui::SliderFloat3("\t", &m->scaleAxes[0], 0.0, 100.0);
+                               ImGui::PopID();
 
-                   ImGui::PushID(&m->rotateFloats[0]);
-                   ImGui::SliderFloat3("Model Rotation", &m->rotateFloats[0], 0.0f, 360.0f);
-                   ImGui::PopID();
+                               ImGui::PushID(&m->modelMatrix);
+                               ImGui::AlignTextToFramePadding();
+                               ImGui::Text("Model Position");
+                               ImGui::SameLine();
+                               ImGui::SliderFloat3("\t", &m->pos[0], -nearClipping, farClipping);
+                               ImGui::PopID();
 
-                   if (m->mixVal == 0.0f) {
-                       ImGui::Text("Color:");
-                       ImGui::PushID(&m->color);
-                       ImGui::SameLine(); HelpMarker(
-                               "Click on the color square to open a color picker.\n"
-                               "CTRL+click on individual component to input value.\n");
-                       ImGui::ColorEdit3("Mesh color", (float*)&m->color);
-                       ImGui::PopID();
-                   }
+                               ImGui::PushID(&m->rotateFloats[0]);
+                               ImGui::AlignTextToFramePadding();
+                               ImGui::Text("Model Rotation");
+                               ImGui::SameLine();
+                               ImGui::SliderFloat3("\t", &m->rotateFloats[0], -1000.0, 1000.0);
+                               ImGui::PopID();
+                           }
 
-               }
-           }
+                           if (ImGui::CollapsingHeader("Mesh Material", ImGuiTreeNodeFlags_DefaultOpen)) {
+                               ImGui::PushID(&m->color);
+                               ImGui::Text("Color:");
+                               ImGui::SameLine(); HelpMarker(
+                                       "Click on the color square to open a color picker.\n"
+                                       "CTRL+click on individual component to input value.\n");
+                               ImGui::ColorPicker4("Mesh color", (float*)&m->color);
+                               ImGui::PopID();
+
+                               ImGui::PushID(&m->meshes[0]);
+                               for (int i = 0; i < m->meshes.size(); i++) {
+                                   if (m->meshes[i].textures.empty()) {
+                                       ImGui::PushID("texture_");
+                                       ImGui::Text("Add Texture");
+                                       if (ImGui::ImageButton((void *) (intptr_t) default_texture, ImVec2(50, 50))) {
+                                          m->meshes[i] = saveTexture(textureDialog, m->meshes[i]);
+                                       }
+                                       ImGui::PopID();
+                                   }
+                                   else {
+                                       float cellSize = 50 + padding;
+
+                                       float panelWidth = ImGui::GetContentRegionAvail().x;
+                                       int columnCount = (int)(panelWidth / cellSize);
+                                       if (columnCount < 1)
+                                           columnCount = 1;
+
+
+                                       ImGui::Columns(columnCount, 0, false);
+
+                                       for (Texture &t : m->meshes[i].textures) {
+                                           if (ImGui::ImageButton((void *) (intptr_t) t.id, ImVec2(50, 50)))
+                                           ImGui::NextColumn();
+                                       }
+                                       ImGui::Columns(1);
+                                   }
+
+
+
+                               }
+                               ImGui::PopID();
+                           }
+
+                           ImGui::TreePop();
+                       }
+                    }
+                    ++i;
+                }
+            }
+            ImGui::End();
         }
-        ImGui::End();
 
         ImGui::Begin("Camera Properties");
         {
