@@ -37,6 +37,7 @@ void Serializer::Serialize(const std::string &filepath) {
         out << YAML::Key << "Name" << YAML::Value << m->modelName;
         out << YAML::Key << "ObjectType" << YAML::Value << m->objectType;
         out << YAML::Key << "Directory" << YAML::Value << m->directory;
+        out << YAML::Key << "Path" << YAML::Value << m->modelPath;
         out << YAML::Key << "Position" << YAML::Value << m->pos;
         out << YAML::Key << "Color" << YAML::Value << m->color;
         out << YAML::Key << "ModelMatrix" << YAML::Value << glm::to_string(m->modelMatrix);
@@ -85,7 +86,7 @@ std::vector<std::shared_ptr<Model>> Serializer::Deserialize(const std::string &f
         for (auto m : entities) {
             if (m["Model"]["ObjectType"].as<std::string>() == "model") {
                 components.push_back(std::make_shared<Model>(
-                        m["Model"]["Directory"].as<std::string>() + "/" + m["Model"]["Name"].as<std::string>(),
+                        m["Model"]["Path"].as<std::string>(),
                         false,
                         m["Model"]["ObjectType"].as<std::string>(),
                         glm::vec4(m["Model"]["Color"][0].as<float>(), m["Model"]["Color"][1].as<float>(), m["Model"]["Color"][2].as<float>(), m["Model"]["Color"][3].as<float>()),
@@ -97,7 +98,7 @@ std::vector<std::shared_ptr<Model>> Serializer::Deserialize(const std::string &f
 
             } else if (m["Model"]["ObjectType"].as<std::string>() == "light") {
                 components.push_back(std::make_shared<Light>(
-                        m["Model"]["Directory"].as<std::string>() + "/" + m["Model"]["Name"].as<std::string>(),
+                        m["Model"]["Path"].as<std::string>(),
                         false,
                         m["Model"]["ObjectType"].as<std::string>(),
                         glm::vec4(m["Model"]["Color"][0].as<float>(), m["Model"]["Color"][1].as<float>(), m["Model"]["Color"][2].as<float>(), m["Model"]["Color"][3].as<float>()),
@@ -109,5 +110,7 @@ std::vector<std::shared_ptr<Model>> Serializer::Deserialize(const std::string &f
             }
         }
         return components;
+    } else {
+        return std::vector<std::shared_ptr<Model>>();
     }
 }

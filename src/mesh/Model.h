@@ -31,6 +31,7 @@ public:
     glm::vec3 scaleAxes;
     glm::vec3 pos;
     glm::vec4 color;
+    std::string modelPath;
 
     Model () {}
 
@@ -45,6 +46,7 @@ public:
           float const &scale =1.0f)
     : gammaCorrection(gamma), objectType(type), color(objColor), pos(pos), modelMatrix(matrix), rotateFloats(rotationVals), scaleAxes(scales), uniformScale(scale) {
         loadModel(path);
+        this->modelPath = path;
         this->selected = false;
     }
 
@@ -65,7 +67,7 @@ public:
             return ;
         }
         this->directory = path.substr(0, path.find_last_of("/\\"));
-        this->modelName = path.substr(path.find_last_of("/\\")+1);
+        this->modelName = "New Object";
 
         processNode(scene->mRootNode, scene);
     }
@@ -197,7 +199,7 @@ private:
         }
         return textures;
     }
-    unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma)
+        unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma)
     {
         std::string filename = std::string(path);
         filename = directory + "\\" + filename;
