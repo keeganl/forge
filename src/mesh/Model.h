@@ -42,7 +42,7 @@ public:
           glm::vec3 const &pos = glm::vec3(0.0f, 0.0f, 0.0f),
           glm::mat4 const &matrix = glm::mat4(1.0f),
           glm::vec3 const &rotationVals =  glm::vec3(0.0f, 0.0f, 0.0f),
-          glm::vec3 const &scales = glm::vec3(0.0f, 0.0f, 0.0f),
+          glm::vec3 const &scales = glm::vec3(1.0f, 1.0f, 1.0f),
           float const &scale =1.0f)
     : gammaCorrection(gamma), objectType(type), color(objColor), pos(pos), modelMatrix(matrix), rotateFloats(rotationVals), scaleAxes(scales), uniformScale(scale) {
         loadModel(path);
