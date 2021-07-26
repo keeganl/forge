@@ -55,7 +55,7 @@ add_executable(forge
         src/light/Light.cpp
         src/light/Light.h
         src/utils/Serializer.cpp
-        src/utils/Serializer.h)
+        src/utils/Serializer.h src/utils/settings/Keymap.cpp src/utils/settings/Keymap.h src/utils/settings/SettingsManager.cpp src/utils/settings/SettingsManager.h src/mesh/helpers/Material.cpp src/mesh/helpers/Material.h src/window/Window.cpp src/window/Window.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")
