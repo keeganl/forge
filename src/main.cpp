@@ -10,8 +10,7 @@
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing flags
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -23,17 +22,11 @@
 #include "mesh/Model.h"
 #include "light/Light.h"
 #include "utils/Serializer.h"
+#include "window/Window.h"
 
 #include <iostream>
 #include <windows.h>
 #include <tchar.h>
-
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-
-// settings
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
 
 
 static void HelpMarker(const char* desc)
@@ -180,46 +173,15 @@ unsigned int loadCubemap(std::vector<std::string> faces)
 
 int main()
 {
-    bool useMultiSampling = false;
-    int sampleCount = 8;
-    // glfw: initialize and configure
-    // ------------------------------
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-    // glfw window creation
-    // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Forge", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
+    Window windowInstance = Window();
 
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
-    if (useMultiSampling) {
-        glEnable(GL_MULTISAMPLE);
-    }
+//    if (useMultiSampling) {
+//        glEnable(GL_MULTISAMPLE);
+//    }
 
     // build and compile our shader program
     // ------------------------------------
@@ -406,7 +368,7 @@ int main()
     skyboxShader.setInt("skybox", 0);
     screenShader.setInt("screenTexture", 0);
 
-    GuiLayer::createContext(window);
+    GuiLayer::createContext(windowInstance.getWindow());
 
     // put this into a class
     int my_image_width = 0;
@@ -533,23 +495,23 @@ int main()
 
     // render loop
     // -----------
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(windowInstance.getWindow()))
     {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        if (useMultiSampling) {
-            glfwWindowHint(GLFW_SAMPLES, sampleCount);
-        }
+//        if (useMultiSampling) {
+//            glfwWindowHint(GLFW_SAMPLES, sampleCount);
+//        }
 
         // render
         // ------
         // bind to framebuffer and draw scene as we normally would to color texture
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-        if (useMultiSampling) {
-            glEnable(GL_MULTISAMPLE);
-        }
+//        if (useMultiSampling) {
+//            glEnable(GL_MULTISAMPLE);
+//        }
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
@@ -719,7 +681,7 @@ int main()
 
             ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16, 512);
             ImGui::SliderFloat("Padding", &padding, 0, 32);
-            ImGui::Checkbox("Set MSAA", &useMultiSampling);
+//            ImGui::Checkbox("Set MSAA", &useMultiSampling);
 
 
             if (ImGui::Button("Revert", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
@@ -1162,7 +1124,7 @@ int main()
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(windowInstance.getWindow());
         glfwPollEvents();
     }
 
@@ -1184,17 +1146,8 @@ int main()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(windowInstance.getWindow());
 
     glfwTerminate();
     return 0;
-}
-
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // make sure the viewport matches the new window dimensions; note that width and
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
 }
