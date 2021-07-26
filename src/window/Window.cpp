@@ -26,16 +26,16 @@ Window::Window() {
 #endif
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Forge", NULL, NULL);
-    if (window == NULL)
+    this->window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Forge", NULL, NULL);
+    if (this->window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
 //        return -1;
     }
 
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwMakeContextCurrent(this->window);
+    glfwSetFramebufferSizeCallback(this->window, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
