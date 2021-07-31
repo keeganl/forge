@@ -4,22 +4,22 @@
 
 #ifndef FORGE_MODEL_H
 #define FORGE_MODEL_H
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include "../../external/stb/stb_image.h"
+#include "../../../../external/assimp/include/assimp/Importer.hpp"
+#include "../../../../external/assimp/include/assimp/scene.h"
+#include "../../../../external/assimp/include/assimp/postprocess.h"
+#include "../../../../external/stb/stb_image.h"
 
-#include "../utils/shader-manager/Shader.h"
-#include "Mesh.h"
+#include "../../utils/shader-manager/Shader.h"
+#include "helpers/Mesh.h"
+#include "../Entity.h"
 
 
-
-class Model  {
-public:
+class Model : public Entity {
+private:
     // model data
     std::vector<Mesh> meshes;
     std::string directory;
-    std::string objectType;
+    EntityType objectType;
     std::vector<Texture> textures_loaded;
     bool gammaCorrection;
     std::string modelName;
@@ -33,11 +33,12 @@ public:
     glm::vec4 color;
     std::string modelPath;
 
+public:
     Model () {}
 
     Model(std::string const &path,
           bool gamma = false,
-          std::string const &type = "model",
+          EntityType const &type = MODEL,
           glm::vec4 const &objColor = glm::vec4(1.0, 0.0, 0.0, 1.0),
           glm::vec3 const &pos = glm::vec3(0.0f, 0.0f, 0.0f),
           glm::mat4 const &matrix = glm::mat4(1.0f),
@@ -72,9 +73,83 @@ public:
         processNode(scene->mRootNode, scene);
     }
 
+
+    std::string getDirectory()
+    {
+        return directory;
+    }
+
+    std::string getPath()
+    {
+        return modelPath;
+    }
+
+    std::vector<Mesh> getMeshes()
+    {
+        return meshes;
+    }
+
+    float getMixVal()
+    {
+        return mixVal;
+    }
+
+    void setMixVal(float newVal)
+    {
+        mixVal = newVal;
+    }
+
+
+
+    // interface methods
+    EntityType getType()
+    {
+        return objectType;
+    }
+
+    std::string getName()
+    {
+        return modelName;
+    }
+
+    glm::vec3 getPosition()
+    {
+        return pos;
+    }
+
+    glm::mat4 getModelMatrix()
+    {
+        return modelMatrix;
+    }
+
+    glm::vec3 getScale()
+    {
+        return scaleAxes;
+    }
+
+    glm::vec3 getRotation()
+    {
+        return rotateFloats;
+    }
+
+    glm::vec4 getColor()
+    {
+       return color;
+    }
+
+    bool getSelected()
+    {
+        return selected;
+    }
+
+    void setSelected()
+    {
+        selected = !selected;
+    }
+
+
+
 private:
-
-
     void processNode(aiNode *node, const aiScene *scene) {
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
             aiMesh *mesh = scene ->mMeshes[node->mMeshes[i]];
@@ -199,7 +274,8 @@ private:
         }
         return textures;
     }
-        unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma)
+
+    unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma)
     {
         std::string filename = std::string(path);
         filename = directory + "\\" + filename;

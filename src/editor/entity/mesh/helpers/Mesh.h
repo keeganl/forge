@@ -6,9 +6,10 @@
 #define FORGE_MESH_H
 
 #include <vector>
-#include "helpers/Vertex.h"
-#include "helpers/Texture.h"
-#include "../utils/shader-manager/Shader.h"
+#include "Vertex.h"
+#include "Texture.h"
+#include "../../../utils/shader-manager/Shader.h"
+#include "Material.h"
 
 class Mesh {
 public:
@@ -16,6 +17,7 @@ public:
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
+    Material material;
     unsigned int VAO;
 
 
@@ -23,6 +25,7 @@ public:
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
+        this->material = Material();
         setupMesh();
     }
 

@@ -1,23 +1,26 @@
-#ifndef FORGE_CAMERA_H
-#define FORGE_CAMERA_H
+#ifndef FORGE_EDITORCAMERA_H
+#define FORGE_EDITORCAMERA_H
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 // passing the data to imgui
-struct Camera {
-    float fov{45.0f};
-    float speed{10.0f};
+class EditorCamera {
+public:
+    float fov = 45.0f;
+    float speed = 10.0f;
+    float sensitivity = 0.5f;
+    bool orthographic = false;
     glm::vec3 pos{glm::vec3(1.0f, 2.0f, 3.0f)};
     glm::vec3 target{glm::vec3(0.0f, 1.0f, 0.0f)};
     glm::vec3 direction{glm::normalize(glm::vec3(0.0f, 0.0f, 3.0f) - glm::vec3(0.0f, 0.0f, 0.0f))};
     glm::vec3 front{glm::vec3(0.0f, 0.0f, -1.0f)};
     glm::vec3 up{glm::vec3(0.0f, 1.0f,  0.0f)};
 
-    Camera() {}
+    EditorCamera() {}
 
-    Camera(float &camFov, float &camSpeed, glm::vec3 &camPos, glm::vec3 &camTarget, glm::vec3 &camDirection, glm::vec3 &camFront, glm::vec3 &camUp) :
+    EditorCamera(float &camFov, float &camSpeed, glm::vec3 &camPos, glm::vec3 &camTarget, glm::vec3 &camDirection, glm::vec3 &camFront, glm::vec3 &camUp) :
             fov(camFov),
             speed(camSpeed),
             pos(camPos),
@@ -44,4 +47,4 @@ struct Camera {
 };
 
 
-#endif //FORGE_CAMERA_H
+#endif //FORGE_EDITORCAMERA_H

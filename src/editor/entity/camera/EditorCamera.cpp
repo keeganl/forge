@@ -1,7 +1,7 @@
 //
 // Created by keega on 6/7/2021.
 //
-#include "Camera.h"
+#include "EditorCamera.h"
 /*
 float& Camera::getFov() {
     return fov;
