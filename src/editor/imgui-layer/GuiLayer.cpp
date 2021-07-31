@@ -3,8 +3,9 @@
 //
 
 #include "GuiLayer.h"
+#include "../entity/camera/EditorCamera.h"
 
-void GuiLayer::createContext(GLFWwindow *window) {
+ void GuiLayer::createContext(GLFWwindow *window) {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -113,14 +114,14 @@ void GuiLayer::createContext(GLFWwindow *window) {
 
 }
 
-void GuiLayer::startFrame() {
+ void GuiLayer::startFrame() {
 // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void GuiLayer::createDockspace() {
+ void GuiLayer::createDockspace() {
     // Create the docking environment
     // | ImGuiWindowFlags_NoTitleBar
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking |
@@ -144,8 +145,108 @@ void GuiLayer::createDockspace() {
     ImGui::End();
 }
 
-void GuiLayer::createPerformanceWindow() {
+ void GuiLayer::createPerformanceWindow() {
     ImGui::Begin("Performance window");
     ImGui::Text("Application average (%.0f FPS)", ImGui::GetIO().Framerate);
+    ImGui::End();
+}
+
+ void GuiLayer::showSettings(bool* p_open)
+{
+    if (!ImGui::Begin("About Dear ImGui", p_open))
+    {
+        ImGui::End();
+        return;
+    }
+    ImGui::Text("Dear ImGui %s", ImGui::GetVersion());
+    ImGui::Separator();
+    ImGui::Text("By Omar Cornut and all Dear ImGui contributors.");
+    ImGui::Text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.");
+
+    ImGui::End();
+}
+
+void GuiLayer::HelpMarker(const char* desc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
+ void GuiLayer::drawDebugEvents()
+{
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    ImGui::Begin("Events");
+    {
+        ImGui::Text("Keys down:");          for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyDown(i))        { ImGui::SameLine(); ImGui::Text("%d (0x%X) (%.02f secs)", i, i, io.KeysDownDuration[i]); }
+        ImGui::Text("Keys pressed:");       for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyPressed(i))     { ImGui::SameLine(); ImGui::Text("%d (0x%X)", i, i); }
+        ImGui::Text("Keys release:");       for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyReleased(i))    { ImGui::SameLine(); ImGui::Text("%d (0x%X)", i, i); }
+        ImGui::Text("Keys mods: %s%s%s%s", io.KeyCtrl ? "CTRL " : "", io.KeyShift ? "SHIFT " : "", io.KeyAlt ? "ALT " : "", io.KeySuper ? "SUPER " : "");
+        ImGui::Text("Chars queue:");        for (int i = 0; i < io.InputQueueCharacters.Size; i++) { ImWchar c = io.InputQueueCharacters[i]; ImGui::SameLine();  ImGui::Text("\'%c\' (0x%04X)", (c > ' ' && c <= 255) ? (char)c : '?', c); } // FIXME: We should convert 'c' to UTF-8 here but the functions are not public.
+
+        ImGui::Text("NavInputs down:");     for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputs[i] > 0.0f)              { ImGui::SameLine(); ImGui::Text("[%d] %.2f (%.02f secs)", i, io.NavInputs[i], io.NavInputsDownDuration[i]); }
+        ImGui::Text("NavInputs pressed:");  for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputsDownDuration[i] == 0.0f) { ImGui::SameLine(); ImGui::Text("[%d]", i); }
+
+        if (ImGui::IsMousePosValid())
+            ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y);
+        else
+            ImGui::Text("Mouse pos: <INVALID>");
+        ImGui::Text("Mouse delta: (%g, %g)", io.MouseDelta.x, io.MouseDelta.y);
+        ImGui::Text("Mouse down:");     for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDown(i))         { ImGui::SameLine(); ImGui::Text("b%d (%.02f secs)", i, io.MouseDownDuration[i]); }
+        ImGui::Text("Mouse clicked:");  for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseClicked(i))      { ImGui::SameLine(); ImGui::Text("b%d", i); }
+        ImGui::Text("Mouse dblclick:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDoubleClicked(i)){ ImGui::SameLine(); ImGui::Text("b%d", i); }
+        ImGui::Text("Mouse released:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseReleased(i))     { ImGui::SameLine(); ImGui::Text("b%d", i); }
+        ImGui::Text("Mouse wheel: %.1f", io.MouseWheel);
+    }
+    ImGui::End();
+}
+
+void GuiLayer::drawMenubar(bool &filePopup, bool &savePopup, bool &settingsPopup)
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if(ImGui::MenuItem("Open Scene", "CTRL+O")) { filePopup = true; }
+            if(ImGui::MenuItem("Save Scene", "CTRL+S")) { savePopup = true; }
+            if(ImGui::MenuItem("Settings", NULL)) { settingsPopup = true; }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Edit"))
+        {
+            if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+            if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+}
+
+ void GuiLayer::drawCameraEditor(EditorCamera &camera) {
+    ImGui::Begin("Camera Properties");
+    {
+        ImGui::Text("Select projection mode:");
+        ImGui::Text("Swap between orthographic and projection:");
+        ImGui::SameLine(); HelpMarker(
+                "Perspective is default.\n");
+        ImGui::Checkbox("Click here", &camera.orthographic);
+        ImGui::SliderFloat("FOV", &camera.fov, 45.0f, 120.0f);
+        ImGui::DragFloat3("Camera Pos", &camera.pos[0]);
+        ImGui::SliderFloat("Camera Speed", &camera.speed, 1.0f, 25.0f);
+        ImGui::SliderFloat("Camera Sensitivity", &camera.sensitivity, 0.1f, 1.0f);
+
+        if(ImGui::Button("Reset camera")) {
+            camera.pos = glm::vec3(1.0f, 2.0f, 3.0f);
+        }
+
+    }
     ImGui::End();
 }

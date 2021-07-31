@@ -4,8 +4,9 @@
 
 #include "Serializer.h"
 #include <glm/gtx/string_cast.hpp>
+#include "../entity/EntityType.h"
 
-Serializer::Serializer(const std::vector<std::shared_ptr<Model>> &c, const Camera &camera)
+Serializer::Serializer(const std::vector<std::shared_ptr<Model>> &c, EditorCamera camera)
         : components(c), cam(camera)
 {
 }
@@ -34,15 +35,15 @@ void Serializer::Serialize(const std::string &filepath) {
         out << YAML::Key << "Model" << YAML::Value;
         out << YAML::BeginMap;
         out << YAML::Key << "Index" << YAML::Value << i;
-        out << YAML::Key << "Name" << YAML::Value << m->modelName;
-        out << YAML::Key << "ObjectType" << YAML::Value << m->objectType;
-        out << YAML::Key << "Directory" << YAML::Value << m->directory;
-        out << YAML::Key << "Path" << YAML::Value << m->modelPath;
-        out << YAML::Key << "Position" << YAML::Value << m->pos;
-        out << YAML::Key << "Color" << YAML::Value << m->color;
-        out << YAML::Key << "ModelMatrix" << YAML::Value << glm::to_string(m->modelMatrix);
-        out << YAML::Key << "Axis Scale" << YAML::Value << m->scaleAxes;
-        out << YAML::Key << "Rotation Axis Values" << YAML::Value << m->scaleAxes;
+        out << YAML::Key << "Name" << YAML::Value << m->getName();
+        out << YAML::Key << "ObjectType" << YAML::Value << m->getType();
+        out << YAML::Key << "Directory" << YAML::Value << m->getDirectory();
+        out << YAML::Key << "Path" << YAML::Value << m->getPath();
+        out << YAML::Key << "Position" << YAML::Value << m->getPosition();
+        out << YAML::Key << "Color" << YAML::Value << m->getColor();
+        out << YAML::Key << "ModelMatrix" << YAML::Value << glm::to_string(m->getModelMatrix());
+        out << YAML::Key << "Axis Scale" << YAML::Value << m->getScale();
+        out << YAML::Key << "Rotation Axis Values" << YAML::Value << m->getRotation();
         out << YAML::EndMap;
         out << YAML::EndMap;
         i++;
@@ -84,11 +85,11 @@ std::vector<std::shared_ptr<Model>> Serializer::Deserialize(const std::string &f
     auto entities = data["Components"];
     if (entities) {
         for (auto m : entities) {
-            if (m["Model"]["ObjectType"].as<std::string>() == "model") {
+            if (m["Model"]["ObjectType"].as<std::string>() == "MODEL") {
                 components.push_back(std::make_shared<Model>(
                         m["Model"]["Path"].as<std::string>(),
                         false,
-                        m["Model"]["ObjectType"].as<std::string>(),
+                        MODEL,
                         glm::vec4(m["Model"]["Color"][0].as<float>(), m["Model"]["Color"][1].as<float>(), m["Model"]["Color"][2].as<float>(), m["Model"]["Color"][3].as<float>()),
                         glm::vec3(m["Model"]["Position"][0].as<float>(), m["Model"]["Position"][1].as<float>(), m["Model"]["Position"][2].as<float>()),
                         glm::mat4(1.0f),
@@ -96,11 +97,11 @@ std::vector<std::shared_ptr<Model>> Serializer::Deserialize(const std::string &f
                         glm::vec3(m["Model"]["Axis Scale"][0].as<float>(), m["Model"]["Axis Scale"][1].as<float>(), m["Model"]["Axis Scale"][2].as<float>()),
                         1.0f));
 
-            } else if (m["Model"]["ObjectType"].as<std::string>() == "light") {
+            } else if (m["Model"]["ObjectType"].as<std::string>() == "LIGHT") {
                 components.push_back(std::make_shared<Light>(
                         m["Model"]["Path"].as<std::string>(),
                         false,
-                        m["Model"]["ObjectType"].as<std::string>(),
+                        LIGHT,
                         glm::vec4(m["Model"]["Color"][0].as<float>(), m["Model"]["Color"][1].as<float>(), m["Model"]["Color"][2].as<float>(), m["Model"]["Color"][3].as<float>()),
                         glm::vec3(m["Model"]["Position"][0].as<float>(), m["Model"]["Position"][1].as<float>(), m["Model"]["Position"][2].as<float>()),
                         glm::mat4(1.0f),
