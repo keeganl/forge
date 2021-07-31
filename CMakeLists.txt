@@ -40,22 +40,22 @@ add_executable(forge
         external/imgui/imfilebrowser.h
         external/stb/stb_image.h
         external/entt/single_include/entt/entt.hpp
-        src/utils/imgui-layer/GuiLayer.cpp
-        src/utils/imgui-layer/GuiLayer.h
-        src/utils/shader-manager/Shader.cpp
-        src/utils/shader-manager/Shader.h
-        src/camera/Camera.h
-        src/camera/Camera.cpp
-        src/mesh/helpers/Vertex.h
-        src/mesh/helpers/Texture.h
-        src/mesh/Mesh.h
-        src/renderer/Renderer.cpp
-        src/renderer/Renderer.h
-        src/mesh/Model.h external/imgui/imfilebrowser.h
-        src/light/Light.cpp
-        src/light/Light.h
-        src/utils/Serializer.cpp
-        src/utils/Serializer.h src/utils/settings/Keymap.cpp src/utils/settings/Keymap.h src/utils/settings/SettingsManager.cpp src/utils/settings/SettingsManager.h src/mesh/helpers/Material.cpp src/mesh/helpers/Material.h src/window/Window.cpp src/window/Window.h)
+        src/editor/imgui-layer/GuiLayer.cpp
+        src/editor/imgui-layer/GuiLayer.h
+        src/editor/utils/shader-manager/Shader.cpp
+        src/editor/utils/shader-manager/Shader.h
+        src/editor/entity/camera/EditorCamera.h
+        src/editor/entity/camera/EditorCamera.cpp
+        src/editor/entity/mesh/helpers/Vertex.h
+        src/editor/entity/mesh/helpers/Texture.h
+        src/editor/entity/mesh/helpers/Mesh.h
+        src/editor/renderer/Renderer.cpp
+        src/editor/renderer/Renderer.h
+        src/editor/entity/mesh/Model.h external/imgui/imfilebrowser.h
+        src/editor/entity/light/Light.cpp
+        src/editor/entity/light/Light.h
+        src/editor/utils/Serializer.cpp
+        src/editor/utils/Serializer.h src/editor/settings/Keymap.cpp src/editor/settings/Keymap.h src/editor/settings/SettingsManager.cpp src/editor/settings/SettingsManager.h src/editor/entity/mesh/helpers/Material.cpp src/editor/entity/mesh/helpers/Material.h src/editor/renderer/window/Window.cpp src/editor/renderer/window/Window.h src/editor/Editor.cpp src/editor/Editor.h src/editor/entity/Entity.h src/editor/renderer/framebuffer/Framebuffer.cpp src/editor/renderer/framebuffer/Framebuffer.h src/editor/renderer/shaderManager/ShaderManager.cpp src/editor/renderer/shaderManager/ShaderManager.h src/editor/entity/EntityType.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")

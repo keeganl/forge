@@ -5,7 +5,7 @@
 #ifndef FORGE_VERTEX_H
 #define FORGE_VERTEX_H
 
-#include <glm/glm.hpp>
+#include "../../../../../external/glm/glm/glm.hpp"
 
 struct Vertex {
     glm::vec3 pos;
