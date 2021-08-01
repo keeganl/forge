@@ -7,7 +7,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include "../../external/stb/stb_image.h"
+#include "../../../external/stb/stb_image.h"
 
 #include "../utils/shader-manager/Shader.h"
 #include "Mesh.h"
