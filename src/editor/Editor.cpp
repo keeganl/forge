@@ -4,7 +4,6 @@
 
 #include "Editor.h"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -24,20 +23,7 @@ static void HelpMarker(const char* desc)
     }
 }
 
-void showSettings(bool* p_open)
-{
-    if (!ImGui::Begin("About Dear ImGui", p_open))
-    {
-        ImGui::End();
-        return;
-    }
-    ImGui::Text("Dear ImGui %s", ImGui::GetVersion());
-    ImGui::Separator();
-    ImGui::Text("By Omar Cornut and all Dear ImGui contributors.");
-    ImGui::Text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.");
 
-    ImGui::End();
-}
 
 static void Strtrim(char* s) {
     char* str_end = s + strlen(s);
@@ -159,36 +145,8 @@ Editor::Editor() {}
 void Editor::run() {
     bool useMultiSampling = false;
     int sampleCount = 8;
-    // glfw: initialize and configure
-    // ------------------------------
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-    // glfw window creation
-    // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Forge", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-//        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-//        return -1;
-    }
+    Window window;
 
     // configure global opengl state
     // -----------------------------
@@ -304,23 +262,7 @@ void Editor::run() {
             1.0f, -1.0f,  1.0f, 0.0f,
             1.0f,  1.0f,  1.0f, 1.0f
     };
-    ImGui::FileBrowser fileDialog;
-    ImGui::FileBrowser saveDialog(ImGuiFileBrowserFlags_EnterNewFilename | ImGuiFileBrowserFlags_CreateNewDir);
-    ImGui::FileBrowser sceneDialog;
-    ImGui::FileBrowser textureDialog;
-    // (optional) set browser properties
-    fileDialog.SetTitle("Select Mesh");
-    fileDialog.SetTypeFilters({ ".obj", ".fbx" });
-
-    sceneDialog.SetTitle("Select Scene File");
-    sceneDialog.SetTypeFilters({ ".yml" });
-
-    saveDialog.SetTitle("Save Scene File");
-    saveDialog.SetTypeFilters({ ".yml" });
-
-    textureDialog.SetTitle("Select Texture File");
-    textureDialog.SetTypeFilters({ ".png", ".jpg" });
-
+   ModalManager modalManager;
 
     // screen quad VAO
     unsigned int quadVAO, quadVBO;
@@ -383,7 +325,7 @@ void Editor::run() {
     skyboxShader.setInt("skybox", 0);
     screenShader.setInt("screenTexture", 0);
 
-    GuiLayer::createContext(window);
+    GuiLayer::createContext(window.windowInstance);
 
     // put this into a class
     int my_image_width = 0;
@@ -421,34 +363,20 @@ void Editor::run() {
     [[maybe_unused]] bool show_demo_window = true;
 
     bool firstMouse = true;
-    float sensitivity = 0.5f; // change this value to your liking
-    float lastX =  800.0f / 2.0;
-    float lastY =  600.0 / 2.0;
-    float yaw   = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
-    float pitch =  0.0f;
 
     static float scale = 1.0f;
     static float nearClipping = 0.1f;
     static float farClipping = 1000.0f;
     static float padding = 16.0f;
     static float thumbnailSize = 48.0f;
-    bool orthographic = false;
     bool showSettingsWindow = false;
     bool openScene = false;
     bool saveScene = false;
     bool openSavePopup = false;
     bool openFilePopup = false;
     bool openSettingsPopup = false;
-    int w = 87;
-    int a = 65;
-    int s = 83;
-    int d = 68;
-    int o = 79;
-    int comma = 44;
-    int del = 261;
-    int one = 49;
-    int two = 50;
-    int three = 51;
+
+    Settings settings = Settings();
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
@@ -458,10 +386,7 @@ void Editor::run() {
 
     std::vector<std::shared_ptr<Model>> scenes;
 
-    glm::vec3 front;
-    Camera camera = Camera();
-
-    glm::vec3 initialCamPos = camera.pos;
+    Camera camera;
 
     meshShader.use();
     lightShader.use();
@@ -510,7 +435,7 @@ void Editor::run() {
 
     // render loop
     // -----------
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(window.windowInstance))
     {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -533,7 +458,7 @@ void Editor::run() {
 
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
-        if (orthographic) {
+        if (camera.orthographic) {
             projection = glm::ortho(0.0f, (float) SCR_WIDTH, 0.0f, (float) SCR_HEIGHT, nearClipping, farClipping);
         } else {
             projection = glm::perspective(glm::radians(camera.fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, nearClipping, farClipping);
@@ -633,167 +558,8 @@ void Editor::run() {
         ImGui::ShowMetricsWindow(&show_demo_window);
         ImGui::ShowDemoWindow(&show_demo_window);
 
-        if (showSettingsWindow)         { showSettings(&showSettingsWindow); }
-
-        if(io.KeyCtrl && ImGui::IsKeyPressed(o) && !openFilePopup) {
-            openFilePopup = true;
-        }
-        else if(io.KeyCtrl && ImGui::IsKeyPressed(s) && !openSavePopup) {
-            openSavePopup = true;
-        }
-        else if(io.KeyCtrl && ImGui::IsKeyPressed(comma) && !openSettingsPopup) {
-            openSettingsPopup = true;
-        }
-
-        // menu bar
-        {
-            if (ImGui::BeginMainMenuBar())
-            {
-                if (ImGui::BeginMenu("File"))
-                {
-                    if(ImGui::MenuItem("Open Scene", "CTRL+O")) { openFilePopup = true; }
-                    if(ImGui::MenuItem("Save Scene", "CTRL+S")) { openSavePopup = true; }
-                    if(ImGui::MenuItem("Settings", NULL)) { openSettingsPopup = true; }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("Edit"))
-                {
-                    if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-                    if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
-                    ImGui::EndMenu();
-                }
-                ImGui::EndMainMenuBar();
-            }
-
-        }
-
-        // this is a workaround for a known bug
-        if (openSavePopup) {
-            saveDialog.Open();
-            openSavePopup = false;
-        }
-
-        if (openFilePopup) {
-            ImGui::OpenPopup("Open File");
-            openFilePopup = false;
-        }
-
-        if(openSettingsPopup) {
-            ImGui::OpenPopup("Settings");
-            openSettingsPopup = false;
-        }
-
-
-        if (ImGui::BeginPopupModal("Open File", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-            sceneDialog.Open();
-            ImGui::EndPopup();
-        }
-
-        if (ImGui::BeginPopupModal("Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            ImGui::Text("Settings");
-            ImGui::Separator();
-
-            ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16, 512);
-            ImGui::SliderFloat("Padding", &padding, 0, 32);
-            ImGui::Checkbox("Set MSAA", &useMultiSampling);
-
-
-            if (ImGui::Button("Revert", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-            ImGui::SetItemDefaultFocus();
-            ImGui::SameLine();
-            if (ImGui::Button("Apply", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-            ImGui::EndPopup();
-        }
-
-        ImGui::Begin("Scene Objects");
-        {
-            for (int i = 0; i < scenes.size(); i++) {
-                ImGui::AlignTextToFramePadding();
-                ImGui::Selectable(scenes[i]->modelName.c_str(), scenes[i]->selected);
-                if (ImGui::IsItemClicked()) {
-                    std::cout << scenes[i]->modelName.c_str() << std::endl;
-                    scenes[i]->selected = !scenes[i]->selected;
-                }
-            }
-            if(ImGui::Button("Add object")) {
-
-                std::cout << "adding mesh" << std::endl;
-                ImGui::OpenPopup("Add object");
-            }
-
-            if (ImGui::BeginPopupModal("Add object", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::Text("Select a model to generate");
-                ImGui::Separator();
-
-
-                if (ImGui::Button("Cube")) {
-                    scenes.push_back(std::make_shared<Model>("../assets/models/primitives/cube/cube.obj"));
-                }
-                if (ImGui::Button("Cylinder")) {
-                    scenes.push_back(std::make_shared<Model>("../assets/models/primitives/cylinder.obj"));
-                }
-                if (ImGui::Button("Plane")) {
-                    scenes.push_back(std::make_shared<Model>("../assets/models/primitives/plane.obj"));
-                }
-                if (ImGui::Button("Light")) {
-                    scenes.push_back(std::make_shared<Light>("../assets/models/primitives/cube/cube.obj"));
-                }
-                if (ImGui::Button("Import")) {
-                    fileDialog.Open();
-                }
-
-                if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-                ImGui::SameLine();
-                if (ImGui::Button("OK", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-                ImGui::SetItemDefaultFocus();
-                ImGui::EndPopup();
-            }
-        }
-        ImGui::End();
-
-        if (ImGui::IsKeyPressed(del)) {
-            std::cout << "delete mesh" << std::endl;
-            scenes.erase(
-                    std::remove_if(scenes.begin(), scenes.end(), isSelected),
-                    scenes.end());
-        }
-
-        {
-
-            fileDialog.Display();
-
-            if (fileDialog.HasSelected())
-            {
-                scenes.push_back(std::make_shared<Model>(fileDialog.GetSelected().string()));
-                fileDialog.ClearSelected();
-            }
-
-
-        }
-
-        {
-            saveDialog.Display();
-
-            if (saveDialog.HasSelected())
-            {
-                Serializer serializer = Serializer(scenes, camera);
-                serializer.Serialize( saveDialog.GetSelected().string() + ".yml");
-                saveDialog.ClearSelected();
-            }
-        }
-
-        {
-            sceneDialog.Display();
-
-            if (sceneDialog.HasSelected())
-            {
-                Serializer serializer = Serializer(scenes, camera);
-                scenes = serializer.Deserialize(sceneDialog.GetSelected().string());
-                sceneDialog.ClearSelected();
-            }
-        }
+        GuiLayer::drawMenubar(settings.keymap, modalManager, showSettingsWindow,
+                              openFilePopup, openSavePopup, openSettingsPopup, scenes, camera);
 
         ImGui::Begin("Asset Browser");
         {
@@ -854,268 +620,13 @@ void Editor::run() {
         }
         ImGui::End();
 
-        if (scenes.size() > 0)
-        {
-            ImGui::Begin("Mesh Properties");
-            {
-                int i = 0;
-                for (auto &m: scenes) {
-                    if (m->selected) {
-                        bool tNode = ImGui::TreeNodeEx((void*)"###", ImGuiTreeNodeFlags_DefaultOpen, "%s", m->modelName.c_str());
-                        if (tNode) {
-                            ImGui::PushID(i);
-                            ImGui::AlignTextToFramePadding();
-                            ImGui::Text("Name");
-                            ImGui::SameLine();
-                            ImGui::InputText("", m->modelName.data(), m->modelName.size()+1);
-                            ImGui::PopID();
+        GuiLayer::drawModelPropertiesPanel(scenes);
 
+        GuiLayer::drawCameraPropertiesPanel(camera);
 
-                            if (ImGui::CollapsingHeader("Mesh Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
-                                ImGui::PushID(&m->uniformScale);
-                                ImGui::AlignTextToFramePadding();
-                                ImGui::Text("Uniform Scale");
-                                ImGui::SameLine();
-                                ImGui::SliderFloat("\t", &m->uniformScale, 1.0f, 20.0f);
-                                ImGui::PopID();
+        GuiLayer::drawScenePanel(textureColorbuffer, firstMouse, deltaTime, camera, settings.keymap, scenes);
 
-                                ImGui::PushID(&m->scaleAxes[0]);
-                                ImGui::AlignTextToFramePadding();
-                                ImGui::Text("Axis Scale");
-                                ImGui::SameLine();
-                                ImGui::SliderFloat3("\t", &m->scaleAxes[0], 0.0, 100.0);
-                                ImGui::PopID();
-
-                                ImGui::PushID(&m->modelMatrix);
-                                ImGui::AlignTextToFramePadding();
-                                ImGui::Text("Model Position");
-                                ImGui::SameLine();
-                                ImGui::SliderFloat3("\t", &m->pos[0], -nearClipping, farClipping);
-                                ImGui::PopID();
-
-                                ImGui::PushID(&m->rotateFloats[0]);
-                                ImGui::AlignTextToFramePadding();
-                                ImGui::Text("Model Rotation");
-                                ImGui::SameLine();
-                                ImGui::SliderFloat3("\t", &m->rotateFloats[0], -1000.0, 1000.0);
-                                ImGui::PopID();
-                            }
-
-                            if (ImGui::CollapsingHeader("Mesh Material", ImGuiTreeNodeFlags_DefaultOpen)) {
-                                ImGui::PushID(&m->color);
-                                ImGui::Text("Color:");
-                                ImGui::SameLine(); HelpMarker(
-                                        "Click on the color square to open a color picker.\n"
-                                        "CTRL+click on individual component to input value.\n");
-                                ImGui::ColorPicker4("Mesh color", (float*)&m->color);
-                                ImGui::PopID();
-
-                                ImGui::PushID(&m->meshes[0]);
-                                for (int i = 0; i < m->meshes.size(); i++) {
-                                    if (m->meshes[i].textures.empty()) {
-                                        ImGui::PushID("texture_");
-                                        ImGui::Text("Add Texture");
-                                        if (ImGui::ImageButton((void *) (intptr_t) default_texture, ImVec2(50, 50))) {
-                                            m->meshes[i] = saveTexture(textureDialog, m->meshes[i]);
-                                        }
-                                        ImGui::PopID();
-                                    }
-                                    else {
-                                        float cellSize = 50 + padding;
-
-                                        float panelWidth = ImGui::GetContentRegionAvail().x;
-                                        int columnCount = (int)(panelWidth / cellSize);
-                                        if (columnCount < 1)
-                                            columnCount = 1;
-
-
-                                        ImGui::Columns(columnCount, 0, false);
-
-                                        for (Texture &t : m->meshes[i].textures) {
-                                            if (ImGui::ImageButton((void *) (intptr_t) t.id, ImVec2(50, 50)))
-                                                ImGui::NextColumn();
-                                        }
-                                        ImGui::Columns(1);
-                                    }
-
-
-
-                                }
-                                ImGui::PopID();
-                            }
-
-                            ImGui::TreePop();
-                        }
-                    }
-                    ++i;
-                }
-            }
-            ImGui::End();
-        }
-
-        ImGui::Begin("Camera Properties");
-        {
-            ImGui::Text("Select projection mode:");
-            ImGui::Text("Swap between orthographic and projection:");
-            ImGui::SameLine(); HelpMarker(
-                    "Perspective is default.\n");
-            ImGui::Checkbox("Click here", &orthographic);
-            ImGui::SliderFloat("FOV", &camera.fov, 45.0f, 120.0f);
-            ImGui::DragFloat3("Camera Pos", &camera.pos[0]);
-            ImGui::SliderFloat("Camera Speed", &camera.speed, 1.0f, 25.0f);
-            ImGui::SliderFloat("Camera Sensitivity", &sensitivity, 0.1f, 1.0f);
-            if(ImGui::Button("Reset camera")) {
-                camera.pos = initialCamPos;
-            }
-
-        }
-        ImGui::End();
-
-        ImGui::Begin("Scene");
-        {
-            // Using a Child allow to fill all the space of the window.
-            // It also alows customization
-            ImGui::BeginChild("ViewportRender");
-            // Get the size of the child (i.e. the whole draw size of the windows).
-            ImVec2 wsize = ImGui::GetWindowSize();
-            // Because I use the texture from OpenGL, I need to invert the V from the UV.
-            ImGui::Image((ImTextureID)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
-            if (ImGui::IsWindowHovered()) {
-
-                {
-//                    std::cout <<  io.MousePos.x << "  " << io.MousePos.y << std::endl;
-
-                    if ( ImGui::IsMouseDown(0) && io.KeyShift) {
-
-                        if((io.KeyShift && ImGui::IsKeyPressed(a))) {
-                            std::cout << "adding mesh" << std::endl;
-                            ImGui::OpenPopup("Add object");
-                        }
-
-                        if (firstMouse)
-                        {
-                            lastX = io.MousePos.x;
-                            lastY = io.MousePos.y;
-                            firstMouse = false;
-                        }
-
-                        float xoffset = io.MousePos.x - lastX;
-                        float yoffset = lastY - io.MousePos.y; // reversed since y-coordinates go from bottom to top
-                        lastX = io.MousePos.x;
-                        lastY = io.MousePos.y;
-
-
-                        xoffset *= sensitivity;
-                        yoffset *= sensitivity;
-
-                        yaw += xoffset;
-                        pitch += yoffset;
-
-                        // make sure that when pitch is out of bounds, screen doesn't get flipped
-                        if (pitch > 89.0f)
-                            pitch = 89.0f;
-                        if (pitch < -89.0f)
-                            pitch = -89.0f;
-
-                        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-                        front.y = sin(glm::radians(pitch));
-                        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-                        camera.front = glm::normalize(front);
-                    }
-
-                    // subtract minimum bound
-                    auto windowSize = ImGui::GetWindowSize();
-                    auto minBound = ImGui::GetWindowPos();
-//                    minBound.x = 0;
-//                    minBound.y = 0;
-
-                    ImVec2 maxBound = { minBound.x + windowSize.x, minBound.y + windowSize.y };
-                    ImVec2 min = {minBound.x, minBound.y};
-                    ImVec2 max = {maxBound.x, maxBound.y};
-                    glm::vec2 bounds[2];
-                    bounds[0] = {minBound.x, minBound.y};
-                    bounds[1] = {maxBound.x, maxBound.y};
-
-                    float mx = io.MousePos.x;
-                    float my = io.MousePos.y;
-                    mx -= bounds[0].x;
-                    my -= bounds[0].y;
-
-                    glm::vec2 viewportSize = bounds[1] - bounds[0];
-
-                    // flip y to match texture
-                    my = viewportSize.y - my;
-
-                    int mouseX = (int)mx;
-                    int mouseY = (int)my;
-
-
-//                    std::cout << mouseX << " " << mouseY << std::endl;
-
-                    glReadBuffer(GL_COLOR_ATTACHMENT1);
-                    int pixelData;
-                    glReadPixels(mouseX, mouseY, 1, 1, GL_RED_INTEGER, GL_INT, &pixelData);
-
-//                    std::cout << "pixelData: " << pixelData << std::endl;
-
-                    if (ImGui::IsMouseDown(0) && pixelData <= scenes.size()) {
-                        scenes[pixelData]->selected = !scenes[pixelData]->selected;
-                    }
-
-                }
-
-                if (io.MouseWheel < 0 && camera.fov < 120.0f) {
-                    camera.fov = camera.fov + 5.0f;
-                }
-                if (io.MouseWheel > 0 && camera.fov > 45.0f) {
-                    camera.fov = camera.fov - 5.0f;
-                }
-                float frameCamSpeed = camera.speed * deltaTime;
-                if (ImGui::IsKeyPressed(w)) {
-
-                    camera.pos += frameCamSpeed * camera.front;
-                }
-                if (ImGui::IsKeyPressed(a)) {
-                    camera.pos -= frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
-                }
-                if (ImGui::IsKeyPressed(s)) {
-                    camera.pos -= frameCamSpeed * camera.front;
-
-                }
-                if (ImGui::IsKeyPressed(d)) {
-                    camera.pos += frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
-                }
-                //project out of normalized coords
-                //std::cout << "Hovering scene tab" << std::endl;
-            }
-            ImGui::EndChild();
-        }
-
-        ImGui::End();
-
-        ImGui::Begin("Events");
-        {
-            ImGui::Text("Keys down:");          for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyDown(i))        { ImGui::SameLine(); ImGui::Text("%d (0x%X) (%.02f secs)", i, i, io.KeysDownDuration[i]); }
-            ImGui::Text("Keys pressed:");       for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyPressed(i))     { ImGui::SameLine(); ImGui::Text("%d (0x%X)", i, i); }
-            ImGui::Text("Keys release:");       for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyReleased(i))    { ImGui::SameLine(); ImGui::Text("%d (0x%X)", i, i); }
-            ImGui::Text("Keys mods: %s%s%s%s", io.KeyCtrl ? "CTRL " : "", io.KeyShift ? "SHIFT " : "", io.KeyAlt ? "ALT " : "", io.KeySuper ? "SUPER " : "");
-            ImGui::Text("Chars queue:");        for (int i = 0; i < io.InputQueueCharacters.Size; i++) { ImWchar c = io.InputQueueCharacters[i]; ImGui::SameLine();  ImGui::Text("\'%c\' (0x%04X)", (c > ' ' && c <= 255) ? (char)c : '?', c); } // FIXME: We should convert 'c' to UTF-8 here but the functions are not public.
-
-            ImGui::Text("NavInputs down:");     for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputs[i] > 0.0f)              { ImGui::SameLine(); ImGui::Text("[%d] %.2f (%.02f secs)", i, io.NavInputs[i], io.NavInputsDownDuration[i]); }
-            ImGui::Text("NavInputs pressed:");  for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputsDownDuration[i] == 0.0f) { ImGui::SameLine(); ImGui::Text("[%d]", i); }
-
-            if (ImGui::IsMousePosValid())
-                ImGui::Text("Mouse pos: (%g, %g)", io.MousePos.x, io.MousePos.y);
-            else
-                ImGui::Text("Mouse pos: <INVALID>");
-            ImGui::Text("Mouse delta: (%g, %g)", io.MouseDelta.x, io.MouseDelta.y);
-            ImGui::Text("Mouse down:");     for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDown(i))         { ImGui::SameLine(); ImGui::Text("b%d (%.02f secs)", i, io.MouseDownDuration[i]); }
-            ImGui::Text("Mouse clicked:");  for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseClicked(i))      { ImGui::SameLine(); ImGui::Text("b%d", i); }
-            ImGui::Text("Mouse dblclick:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseDoubleClicked(i)){ ImGui::SameLine(); ImGui::Text("b%d", i); }
-            ImGui::Text("Mouse released:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseReleased(i))     { ImGui::SameLine(); ImGui::Text("b%d", i); }
-            ImGui::Text("Mouse wheel: %.1f", io.MouseWheel);
-        }
-        ImGui::End();
+        GuiLayer::drawDebugEventsPanel();
 
         lightShader.use();
         meshShader.use();
@@ -1139,7 +650,7 @@ void Editor::run() {
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window.windowInstance);
         glfwPollEvents();
     }
 
@@ -1161,17 +672,8 @@ void Editor::run() {
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(window.windowInstance);
 
     glfwTerminate();
 //    return 0;
-}
-
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // make sure the viewport matches the new window dimensions; note that width and
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
 }

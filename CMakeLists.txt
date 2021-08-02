@@ -40,8 +40,8 @@ add_executable(forge
         external/imgui/imfilebrowser.h
         external/stb/stb_image.h
         external/entt/single_include/entt/entt.hpp
-        src/editor/utils/imgui-layer/GuiLayer.cpp
-        src/editor/utils/imgui-layer/GuiLayer.h
+        src/editor/ui/imgui-layer/GuiLayer.cpp
+        src/editor/ui/imgui-layer/GuiLayer.h
         src/editor/utils/shader-manager/Shader.cpp
         src/editor/utils/shader-manager/Shader.h
         src/editor/camera/Camera.h
@@ -55,7 +55,7 @@ add_executable(forge
         src/editor/light/Light.cpp
         src/editor/light/Light.h
         src/editor/utils/Serializer.cpp
-        src/editor/utils/Serializer.h src/editor/Editor.cpp src/editor/Editor.h)
+        src/editor/utils/Serializer.h src/editor/Editor.cpp src/editor/Editor.h src/editor/settings/Settings.cpp src/editor/settings/Settings.h src/editor/settings/keymap/Keymap.cpp src/editor/settings/keymap/Keymap.h src/editor/ui/ModalManager/ModalManager.cpp src/editor/ui/ModalManager/ModalManager.h src/editor/window/Window.cpp src/editor/window/Window.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")

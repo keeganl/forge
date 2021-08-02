@@ -17,18 +17,19 @@
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing flags
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "utils/imgui-layer/GuiLayer.h"
+#include "window/Window.h"
+#include "ui/imgui-layer/GuiLayer.h"
+#include "ui/ModalManager/ModalManager.h"
 #include "utils/shader-manager/Shader.h"
 #include "camera/Camera.h"
 #include "mesh/Model.h"
 #include "light/Light.h"
+#include "settings/Settings.h"
 #include "utils/Serializer.h"
 
 #include <iostream>
