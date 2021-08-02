@@ -9,29 +9,7 @@
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
-
-static void HelpMarker(const char* desc)
-{
-    ImGui::TextDisabled("(?)");
-    if (ImGui::IsItemHovered())
-    {
-        ImGui::BeginTooltip();
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-        ImGui::TextUnformatted(desc);
-        ImGui::PopTextWrapPos();
-        ImGui::EndTooltip();
-    }
-}
-
-
-
-static void Strtrim(char* s) {
-    char* str_end = s + strlen(s);
-    while (str_end > s && str_end[-1] == ' ')
-        str_end--;
-    *str_end = 0;
-}
-
+// TODO: move vector of meshes to it's own object
 bool checkLights(std::vector<std::shared_ptr<Model>> const &scenes) {
     bool res = false;
     for (std::shared_ptr<Model> m : scenes) {
@@ -40,45 +18,6 @@ bool checkLights(std::vector<std::shared_ptr<Model>> const &scenes) {
         }
     }
     return res;
-}
-
-bool isSelected(std::shared_ptr<Model> const &model) {
-    return model->selected;
-}
-
-// Simple helper function to load an image into a OpenGL texture with common settings
-bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
-{
-    // Load from file
-    int image_width = 0;
-    int image_height = 0;
-    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
-    if (image_data == NULL)
-        return false;
-
-    // Create a OpenGL texture identifier
-    GLuint image_texture;
-    glGenTextures(1, &image_texture);
-    glBindTexture(GL_TEXTURE_2D, image_texture);
-
-    // Setup filtering parameters for display
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
-
-    // Upload pixels into texture
-#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-#endif
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
-    stbi_image_free(image_data);
-
-    *out_texture = image_texture;
-    *out_width = image_width;
-    *out_height = image_height;
-
-    return true;
 }
 
 Mesh saveTexture(ImGui::FileBrowser &textureDialog, Mesh &m) {
@@ -90,13 +29,9 @@ Mesh saveTexture(ImGui::FileBrowser &textureDialog, Mesh &m) {
 
         Texture texture;
 
-        int new_texture_width = 0;
-        int new_texture_height = 0;
-        GLuint new_texture_texture = 0;
-        bool new_texture_ret = LoadTextureFromFile(textureFilePath.c_str(), &new_texture_texture, &new_texture_width, &new_texture_height);
-        IM_ASSERT(new_texture_ret);
+        UITexture new_texture_texture(textureFilePath.c_str());
 
-        texture.id = new_texture_texture;
+        texture.id = new_texture_texture.textureID;
         texture.path = textureFilePath;
 
         m.textures.push_back(texture);
@@ -107,6 +42,7 @@ Mesh saveTexture(ImGui::FileBrowser &textureDialog, Mesh &m) {
 
 }
 
+// TODO: move to cubemap class
 unsigned int loadCubemap(std::vector<std::string> faces)
 {
     unsigned int textureID;
@@ -327,36 +263,11 @@ void Editor::run() {
 
     GuiLayer::createContext(window.windowInstance);
 
-    // put this into a class
-    int my_image_width = 0;
-    int my_image_height = 0;
-    GLuint my_image_texture = 0;
-    bool ret = LoadTextureFromFile("../assets/editor/folder.png", &my_image_texture, &my_image_width, &my_image_height);
-    IM_ASSERT(ret);
-
-    int my_image_width2 = 0;
-    int my_image_height2 = 0;
-    GLuint my_image_texture2 = 0;
-    bool ret2 = LoadTextureFromFile("../assets/editor/file.png", &my_image_texture2, &my_image_width2, &my_image_height2);
-    IM_ASSERT(ret2);
-
-    int back_arrow_width = 0;
-    int back_arrow_height = 0;
-    GLuint back_arrow_texture = 0;
-    bool back_arrow_ret = LoadTextureFromFile("../assets/editor/back_arrow.png", &back_arrow_texture, &back_arrow_width, &back_arrow_height);
-    IM_ASSERT(back_arrow_ret);
-
-    int yml_width = 0;
-    int yml_height = 0;
-    GLuint yml_texture = 0;
-    bool yml_ret = LoadTextureFromFile("../assets/editor/yml.png", &yml_texture, &yml_width, &yml_height);
-    IM_ASSERT(yml_ret);
-
-    int default_width = 0;
-    int default_height = 0;
-    GLuint default_texture = 0;
-    bool default_ret = LoadTextureFromFile("../assets/editor/no_texture.jpg", &default_texture, &default_width, &default_height);
-    IM_ASSERT(default_ret);
+    UITexture ret("../assets/editor/folder.png");
+    UITexture ret2("../assets/editor/file.png");
+    UITexture back_arrow_ret("../assets/editor/back_arrow.png");
+    UITexture yml_ret("../assets/editor/yml.png");
+    UITexture default_ret("../assets/editor/no_texture.png");
 
 
     // Our state
@@ -565,7 +476,7 @@ void Editor::run() {
         {
 
             if (currentDirectory != startingDirectory) {
-                if (ImGui::ImageButton((void *) (intptr_t) back_arrow_texture, ImVec2(20, 20))) {
+                if (ImGui::ImageButton((void *) (intptr_t) back_arrow_ret.textureID, ImVec2(20, 20))) {
                     currentDirectory = currentDirectory.parent_path();
                 }
             }
@@ -590,7 +501,7 @@ void Editor::run() {
                     ImGui::BeginGroup();
                     {
                         ImGui::PushID(p.path().string().c_str());
-                        if (ImGui::ImageButton((void *) (intptr_t) my_image_texture, { thumbnailSize, thumbnailSize }))
+                        if (ImGui::ImageButton((void *) (intptr_t) ret.textureID, { thumbnailSize, thumbnailSize }))
                         {
                             currentDirectory /= p.path();
                         }
@@ -603,9 +514,9 @@ void Editor::run() {
                     {
                         ImGui::PushID(p.path().string().c_str());
                         if (p.path().string().find(".yml") != std::string::npos) {
-                            ImGui::ImageButton((void *) (intptr_t) yml_texture, { thumbnailSize, thumbnailSize });
+                            ImGui::ImageButton((void *) (intptr_t) yml_ret.textureID, { thumbnailSize, thumbnailSize });
                         } else {
-                            ImGui::ImageButton((void *) (intptr_t) my_image_texture2, { thumbnailSize, thumbnailSize });
+                            ImGui::ImageButton((void *) (intptr_t) ret2.textureID, { thumbnailSize, thumbnailSize });
                         }
                         ImGui::Text(relativePath.string().c_str());
                         ImGui::PopID();
