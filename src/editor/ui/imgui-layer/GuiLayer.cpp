@@ -463,20 +463,19 @@ void showSettings(bool* p_open)
     ImGui::End();
 }
 
-void GuiLayer::drawMenubar(Keymap &keymap, ModalManager &modalManager, bool &showSettingsWindow,
-                           bool &openFilePopup, bool &openSavePopup, bool &openSettingsPopup, std::vector<std::shared_ptr<Model>> &scenes, Camera &camera) {
+void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::vector<std::shared_ptr<Model>> &scenes, Camera &camera) {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-    if (showSettingsWindow)         { showSettings(&showSettingsWindow); }
+    if (settings.showSettingsWindow)         { showSettings(&settings.showSettingsWindow); }
 
-    if(io.KeyCtrl && ImGui::IsKeyPressed(keymap.keys["o"]) && !openFilePopup) {
-        openFilePopup = true;
+    if(io.KeyCtrl && ImGui::IsKeyPressed(settings.keymap.keys["o"]) && !settings.openFilePopup) {
+        settings.openFilePopup = true;
     }
-    else if(io.KeyCtrl && ImGui::IsKeyPressed(keymap.keys["s"]) && !openSavePopup) {
-        openSavePopup = true;
+    else if(io.KeyCtrl && ImGui::IsKeyPressed(settings.keymap.keys["s"]) && !settings.openSavePopup) {
+        settings.openSavePopup = true;
     }
-    else if(io.KeyCtrl && ImGui::IsKeyPressed(keymap.keys[","]) && !openSettingsPopup) {
-        openSettingsPopup = true;
+    else if(io.KeyCtrl && ImGui::IsKeyPressed(settings.keymap.keys[","]) && !settings.openSettingsPopup) {
+        settings.openSettingsPopup = true;
     }
 
     // menu bar
@@ -485,9 +484,9 @@ void GuiLayer::drawMenubar(Keymap &keymap, ModalManager &modalManager, bool &sho
         {
             if (ImGui::BeginMenu("File"))
             {
-                if(ImGui::MenuItem("Open Scene", "CTRL+O")) { openFilePopup = true; }
-                if(ImGui::MenuItem("Save Scene", "CTRL+S")) { openSavePopup = true; }
-                if(ImGui::MenuItem("Settings", NULL)) { openSettingsPopup = true; }
+                if(ImGui::MenuItem("Open Scene", "CTRL+O")) { settings.openFilePopup = true; }
+                if(ImGui::MenuItem("Save Scene", "CTRL+S")) { settings.openSavePopup = true; }
+                if(ImGui::MenuItem("Settings", NULL)) { settings.openSettingsPopup = true; }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Edit"))
@@ -502,19 +501,19 @@ void GuiLayer::drawMenubar(Keymap &keymap, ModalManager &modalManager, bool &sho
     }
 
     // this is a workaround for a known bug
-    if (openSavePopup) {
+    if (settings.openSavePopup) {
         modalManager.saveDialog.Open();
-        openSavePopup = false;
+        settings.openSavePopup = false;
     }
 
-    if (openFilePopup) {
+    if (settings.openFilePopup) {
         ImGui::OpenPopup("Open File");
-        openFilePopup = false;
+        settings.openFilePopup = false;
     }
 
-    if(openSettingsPopup) {
+    if(settings.openSettingsPopup) {
         ImGui::OpenPopup("Settings");
-        openSettingsPopup = false;
+        settings.openSettingsPopup = false;
     }
 
 
@@ -527,11 +526,9 @@ void GuiLayer::drawMenubar(Keymap &keymap, ModalManager &modalManager, bool &sho
     {
         ImGui::Text("Settings");
         ImGui::Separator();
-        float padding = 16.0f;
-        float thumbnailSize = 48.0f;
 
-        ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16, 512);
-        ImGui::SliderFloat("Padding", &padding, 0, 32);
+        ImGui::SliderFloat("Thumbnail Size", &settings.thumbnailSize, 16, 512);
+        ImGui::SliderFloat("Padding", &settings.padding, 0, 32);
 //        ImGui::Checkbox("Set MSAA", &useMultiSampling);
 
 
@@ -589,7 +586,7 @@ void GuiLayer::drawMenubar(Keymap &keymap, ModalManager &modalManager, bool &sho
     }
     ImGui::End();
 
-    if (ImGui::IsKeyPressed(keymap.keys["del"])) {
+    if (ImGui::IsKeyPressed(settings.keymap.keys["del"])) {
         std::cout << "delete mesh" << std::endl;
         scenes.erase(
                 std::remove_if(scenes.begin(), scenes.end(), [](std::shared_ptr<Model> const model) {

@@ -106,38 +106,18 @@ void Editor::run() {
     skybox.shader.setInt("skybox", 0);
     screenShader.setInt("screenTexture", 0);
 
+    // TODO: move to UI orchestrator, constructor
     GuiLayer::createContext(window.windowInstance);
 
+    // TODO: move to UI orchestrator, loadDefaultTextures
     UITexture ret("../assets/editor/folder.png");
     UITexture ret2("../assets/editor/file.png");
     UITexture back_arrow_ret("../assets/editor/back_arrow.png");
     UITexture yml_ret("../assets/editor/yml.png");
     UITexture default_ret("../assets/editor/no_texture.png");
 
-
-    // Our state
-    [[maybe_unused]] bool show_demo_window = true;
-
-    bool firstMouse = true;
-
-    static float scale = 1.0f;
-    static float nearClipping = 0.1f;
-    static float farClipping = 1000.0f;
-    static float padding = 16.0f;
-    static float thumbnailSize = 48.0f;
-    bool showSettingsWindow = false;
-    bool openScene = false;
-    bool saveScene = false;
-    bool openSavePopup = false;
-    bool openFilePopup = false;
-    bool openSettingsPopup = false;
-
+    // TODO: move to UI orchestrator, setDefaultSettings
     Settings settings = Settings();
-
-    float deltaTime = 0.0f;
-    float lastFrame = 0.0f;
-    std::filesystem::path startingDirectory = "C:\\Users\\keega\\Desktop\\school\\grad\\research\\forge\\assets";
-    std::filesystem::path currentDirectory = "C:\\Users\\keega\\Desktop\\school\\grad\\research\\forge\\assets";
 
 
     std::vector<std::shared_ptr<Model>> scenes;
@@ -194,8 +174,8 @@ void Editor::run() {
     while (!glfwWindowShouldClose(window.windowInstance))
     {
         float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+        settings.deltaTime = currentFrame - settings.lastFrame;
+        settings.lastFrame = currentFrame;
         if (useMultiSampling) {
             glfwWindowHint(GLFW_SAMPLES, sampleCount);
         }
@@ -215,9 +195,9 @@ void Editor::run() {
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
         if (camera.orthographic) {
-            projection = glm::ortho(0.0f, (float) SCR_WIDTH, 0.0f, (float) SCR_HEIGHT, nearClipping, farClipping);
+            projection = glm::ortho(0.0f, (float) SCR_WIDTH, 0.0f, (float) SCR_HEIGHT, settings.nearClipping, settings.farClipping);
         } else {
-            projection = glm::perspective(glm::radians(camera.fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, nearClipping, farClipping);
+            projection = glm::perspective(glm::radians(camera.fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, settings.nearClipping, settings.farClipping);
         }
         view = glm::lookAt(camera.pos, camera.pos + camera.front, camera.up);
 
@@ -300,22 +280,21 @@ void Editor::run() {
         GuiLayer::startFrame();
         GuiLayer::createDockspace();
         GuiLayer::createPerformanceWindow();
-        ImGui::ShowMetricsWindow(&show_demo_window);
-        ImGui::ShowDemoWindow(&show_demo_window);
+        ImGui::ShowMetricsWindow(&settings.showDebugWindows);
+        ImGui::ShowDemoWindow(&settings.showDebugWindows);
 
-        GuiLayer::drawMenubar(settings.keymap, modalManager, showSettingsWindow,
-                              openFilePopup, openSavePopup, openSettingsPopup, scenes, camera);
+        GuiLayer::drawMenubar(settings, modalManager, scenes, camera);
 
         ImGui::Begin("Asset Browser");
         {
 
-            if (currentDirectory != startingDirectory) {
+            if (settings.currentDirectory != settings.startingDirectory) {
                 if (ImGui::ImageButton((void *) (intptr_t) back_arrow_ret.textureID, ImVec2(20, 20))) {
-                    currentDirectory = currentDirectory.parent_path();
+                    settings.currentDirectory = settings.currentDirectory.parent_path();
                 }
             }
 
-            float cellSize = thumbnailSize + padding;
+            float cellSize = settings.thumbnailSize + settings.padding;
 
             float panelWidth = ImGui::GetContentRegionAvail().x;
             int columnCount = (int)(panelWidth / cellSize);
@@ -326,18 +305,18 @@ void Editor::run() {
             ImGui::Columns(columnCount, 0, false);
 
 
-            for(auto& p: std::filesystem::directory_iterator(currentDirectory))
+            for(auto& p: std::filesystem::directory_iterator(settings.currentDirectory))
             {
-                auto relativePath = std::filesystem::relative(p.path(), startingDirectory).filename();
+                auto relativePath = std::filesystem::relative(p.path(), settings.startingDirectory).filename();
                 ImGuiStyle& style = ImGui::GetStyle();
                 if (p.is_directory())
                 {
                     ImGui::BeginGroup();
                     {
                         ImGui::PushID(p.path().string().c_str());
-                        if (ImGui::ImageButton((void *) (intptr_t) ret.textureID, { thumbnailSize, thumbnailSize }))
+                        if (ImGui::ImageButton((void *) (intptr_t) ret.textureID, { settings.thumbnailSize, settings.thumbnailSize }))
                         {
-                            currentDirectory /= p.path();
+                            settings.currentDirectory /= p.path();
                         }
                         ImGui::TextWrapped(relativePath.string().c_str());
                         ImGui::PopID();
@@ -348,9 +327,9 @@ void Editor::run() {
                     {
                         ImGui::PushID(p.path().string().c_str());
                         if (p.path().string().find(".yml") != std::string::npos) {
-                            ImGui::ImageButton((void *) (intptr_t) yml_ret.textureID, { thumbnailSize, thumbnailSize });
+                            ImGui::ImageButton((void *) (intptr_t) yml_ret.textureID, { settings.thumbnailSize, settings.thumbnailSize });
                         } else {
-                            ImGui::ImageButton((void *) (intptr_t) ret2.textureID, { thumbnailSize, thumbnailSize });
+                            ImGui::ImageButton((void *) (intptr_t) ret2.textureID, { settings.thumbnailSize, settings.thumbnailSize });
                         }
                         ImGui::Text(relativePath.string().c_str());
                         ImGui::PopID();
@@ -369,7 +348,7 @@ void Editor::run() {
 
         GuiLayer::drawCameraPropertiesPanel(camera);
 
-        GuiLayer::drawScenePanel(textureColorbuffer, firstMouse, deltaTime, camera, settings.keymap, scenes);
+        GuiLayer::drawScenePanel(textureColorbuffer, settings.firstMouse, settings.deltaTime, camera, settings.keymap, scenes);
 
         GuiLayer::drawDebugEventsPanel();
 

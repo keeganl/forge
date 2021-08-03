@@ -7,7 +7,7 @@
 #include "../../mesh/Model.h"
 #include "../../light/Light.h"
 #include "../../camera/Camera.h"
-#include "../../settings/keymap/Keymap.h"
+#include "../../settings/Settings.h"
 #include "../ModalManager/ModalManager.h"
 #include "../../utils/Serializer.h"
 
@@ -28,8 +28,7 @@ namespace GuiLayer {
     void drawCameraPropertiesPanel(Camera &camera);
     void drawDebugEventsPanel();
     void drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Camera &camera, Keymap &keymap, std::vector<std::shared_ptr<Model>> &scenes);
-    void drawMenubar(Keymap &keymap, ModalManager &modalManager, bool &showSettingsWindow,
-                     bool &openFilePopup, bool &openSavePopup, bool &openSettingsPopup, std::vector<std::shared_ptr<Model>> &scenes, Camera &camera);
+    void drawMenubar(Settings &settings, ModalManager &modalManager, std::vector<std::shared_ptr<Model>> &scenes, Camera &camera);
 };
 
 
