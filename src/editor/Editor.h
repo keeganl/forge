@@ -11,7 +11,6 @@
 #include "../../external/imgui/imgui_internal.h"
 #include "../../external/imgui/imfilebrowser.h"
 
-#include "../../external/stb/stb_image.h"
 
 #include <assimp/Importer.hpp>      // C++ importer interface
 #include <assimp/scene.h>           // Output data structure
@@ -32,6 +31,7 @@
 #include "light/Light.h"
 #include "settings/Settings.h"
 #include "utils/Serializer.h"
+#include "skybox/Skybox.h"
 
 #include <iostream>
 #include <windows.h>

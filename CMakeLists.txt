@@ -55,7 +55,7 @@ add_executable(forge
         src/editor/light/Light.cpp
         src/editor/light/Light.h
         src/editor/utils/Serializer.cpp
-        src/editor/utils/Serializer.h src/editor/Editor.cpp src/editor/Editor.h src/editor/settings/Settings.cpp src/editor/settings/Settings.h src/editor/settings/keymap/Keymap.cpp src/editor/settings/keymap/Keymap.h src/editor/ui/ModalManager/ModalManager.cpp src/editor/ui/ModalManager/ModalManager.h src/editor/window/Window.cpp src/editor/window/Window.h src/editor/renderer/framebuffer/Framebuffer.cpp src/editor/renderer/framebuffer/Framebuffer.h src/editor/ui/textures/UITexture.cpp src/editor/ui/textures/UITexture.h)
+        src/editor/utils/Serializer.h src/editor/Editor.cpp src/editor/Editor.h src/editor/settings/Settings.cpp src/editor/settings/Settings.h src/editor/settings/keymap/Keymap.cpp src/editor/settings/keymap/Keymap.h src/editor/ui/ModalManager/ModalManager.cpp src/editor/ui/ModalManager/ModalManager.h src/editor/window/Window.cpp src/editor/window/Window.h src/editor/renderer/framebuffer/Framebuffer.cpp src/editor/renderer/framebuffer/Framebuffer.h src/editor/ui/textures/UITexture.cpp src/editor/ui/textures/UITexture.h src/editor/skybox/Skybox.cpp src/editor/skybox/Skybox.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")

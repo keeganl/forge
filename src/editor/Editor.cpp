@@ -42,39 +42,6 @@ Mesh saveTexture(ImGui::FileBrowser &textureDialog, Mesh &m) {
 
 }
 
-// TODO: move to cubemap class
-unsigned int loadCubemap(std::vector<std::string> faces)
-{
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-    int width, height, nrChannels;
-    for (unsigned int i = 0; i < faces.size(); i++)
-    {
-        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-        if (data)
-        {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
-            );
-            stbi_image_free(data);
-        }
-        else
-        {
-            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
-            stbi_image_free(data);
-        }
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    return textureID;
-}
-
 
 Editor::Editor() {}
 
@@ -97,97 +64,8 @@ void Editor::run() {
     Shader meshShader("../shaders/vert.glsl", "../shaders/frag.glsl");
     Shader lightShader("../shaders/light/vert.glsl", "../shaders/light/frag.glsl");
     Shader screenShader("../shaders/framebuffer/vert.glsl", "../shaders/framebuffer/frag.glsl");
-    Shader skyboxShader("../shaders/skybox/vert.glsl", "../shaders/skybox/frag.glsl");
 
-    float cubeVertices[] = {
-            // positions          // normals
-            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-            0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-            0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-            0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-            0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-    };
-    float skyboxVertices[] = {
-            // positions
-            -1.0f,  1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
-
-            -1.0f, -1.0f,  1.0f,
-            -1.0f, -1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f,  1.0f,
-            -1.0f, -1.0f,  1.0f,
-
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-
-            -1.0f, -1.0f,  1.0f,
-            -1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f, -1.0f,  1.0f,
-            -1.0f, -1.0f,  1.0f,
-
-            -1.0f,  1.0f, -1.0f,
-            1.0f,  1.0f, -1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            -1.0f,  1.0f,  1.0f,
-            -1.0f,  1.0f, -1.0f,
-
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f,  1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f,  1.0f,
-            1.0f, -1.0f,  1.0f
-    };
-
+    Skybox skybox;
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
             // positions   // texCoords
@@ -212,39 +90,6 @@ void Editor::run() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-    // cube VAO
-    unsigned int cubeVAO, cubeVBO;
-    glGenVertexArrays(1, &cubeVAO);
-    glGenBuffers(1, &cubeVBO);
-    glBindVertexArray(cubeVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    // skybox VAO
-    unsigned int skyboxVAO, skyboxVBO;
-    glGenVertexArrays(1, &skyboxVAO);
-    glGenBuffers(1, &skyboxVBO);
-    glBindVertexArray(skyboxVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-    // load textures
-    // -------------
-    std::vector<std::string> faces
-            {
-                    "../assets/skybox/right.jpg",
-                    "../assets/skybox/left.jpg",
-                    "../assets/skybox/top.jpg",
-                    "../assets/skybox/bottom.jpg",
-                    "../assets/skybox/front.jpg",
-                    "../assets/skybox/back.jpg",
-            };
-    unsigned int cubemapTexture = loadCubemap(faces);
 
     // tell opengl for each sampler t\o which texture unit it belongs to (only has to be done once)
     // -------------------------------------------------------------------------------------------
@@ -257,8 +102,8 @@ void Editor::run() {
     meshShader.use();
     meshShader.setInt("skybox", 0);
 
-    skyboxShader.use();
-    skyboxShader.setInt("skybox", 0);
+    skybox.shader.use();
+    skybox.shader.setInt("skybox", 0);
     screenShader.setInt("screenTexture", 0);
 
     GuiLayer::createContext(window.windowInstance);
@@ -434,18 +279,7 @@ void Editor::run() {
         }
 
         // draw skybox as last
-        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-        skyboxShader.use();
-        glm::mat4 viewNoTranslations = glm::mat4(glm::mat3(view)); // remove translation from the view matrix
-        skyboxShader.setMat4("view", viewNoTranslations);
-        skyboxShader.setMat4("projection", projection);
-        // skybox cube
-        glBindVertexArray(skyboxVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        glDepthFunc(GL_LESS); // set depth function back to default
+        skybox.draw(view, projection);
 
         // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -569,7 +403,7 @@ void Editor::run() {
     // ------------------------------------------------------------------------
     glDeleteFramebuffers(1, &framebuffer);
     glDeleteVertexArrays(1, &quadVAO);
-    glDeleteBuffers(1, &skyboxVAO);
+    glDeleteBuffers(1, &skybox.skyboxVAO);
     glDeleteBuffers(1, &quadVBO);
 
     meshShader.destroy();
