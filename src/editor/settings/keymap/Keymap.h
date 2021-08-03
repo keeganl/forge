@@ -11,9 +11,11 @@
 class Keymap {
 
 public:
-    Keymap();
-
     std::map<std::string, int> keys;
+
+    Keymap();
+    void insertKey(std::string &key, int &val);
+    void removeKey(std::string &key);
 };
 
 
