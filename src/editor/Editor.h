@@ -25,6 +25,7 @@
 #include "ui/imgui-layer/GuiLayer.h"
 #include "ui/ModalManager/ModalManager.h"
 #include "ui/textures/UITexture.h"
+#include "ui/UIManager.h"
 #include "utils/shader-manager/Shader.h"
 #include "camera/Camera.h"
 #include "mesh/Model.h"

@@ -21,6 +21,7 @@
 
 namespace GuiLayer {
     void createContext(GLFWwindow *window);
+    void cleanup();
     void startFrame();
     void createDockspace();
     void createPerformanceWindow();

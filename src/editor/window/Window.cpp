@@ -49,3 +49,7 @@ Window::Window()
 //        return -1;
     }
 }
+
+void Window::destroyWindow() {
+    glfwDestroyWindow(windowInstance);
+}

@@ -127,6 +127,14 @@ void GuiLayer::createContext(GLFWwindow *window)
 
 }
 
+void GuiLayer::cleanup() {
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+
 void GuiLayer::startFrame()
 {
 // Start the Dear ImGui frame
