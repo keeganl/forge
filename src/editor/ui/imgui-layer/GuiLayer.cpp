@@ -178,6 +178,8 @@ void GuiLayer::createPerformanceWindow()
 
 void GuiLayer::drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &scenes, std::map<std::string, UITexture> &uiTextures, ModalManager &modalManager) {
 
+    int tempScenePos = 0;
+    int tempMeshPos = 0;
     if (scenes.size() > 0)
     {
         ImGui::Begin("Mesh Properties");
@@ -236,12 +238,14 @@ void GuiLayer::drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &sce
                             ImGui::PopID();
 
                             ImGui::PushID(&m->meshes[0]);
+                            tempScenePos = i;
                             for (int i = 0; i < m->meshes.size(); i++) {
                                 if (m->meshes[i].textures.empty()) {
                                     ImGui::PushID("texture_");
                                     ImGui::Text("Add Texture");
                                     if (ImGui::ImageButton((void *) (intptr_t) uiTextures.find("default")->second.textureID, ImVec2(50, 50))) {
-                                        m->meshes[i].saveTexture(modalManager.textureDialog);
+                                       modalManager.textureDialog.Open();
+                                       tempMeshPos = i;
                                     }
                                     ImGui::PopID();
                                 }
@@ -277,6 +281,18 @@ void GuiLayer::drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &sce
             }
         }
         ImGui::End();
+    }
+
+    {
+        modalManager.textureDialog.Display();
+
+        if (modalManager.textureDialog.HasSelected())
+        {
+            std::string texturePath = modalManager.textureDialog.GetSelected().string();
+            // FIXME: feels like there must be a better way
+            scenes[tempScenePos]->meshes[tempMeshPos].saveTexture(texturePath);
+            modalManager.textureDialog.ClearSelected();
+        }
     }
 }
 
