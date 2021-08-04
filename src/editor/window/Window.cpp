@@ -50,6 +50,13 @@ Window::Window()
     }
 }
 
+void Window::swapAndPoll() {
+    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+    // -------------------------------------------------------------------------------
+    glfwSwapBuffers(windowInstance);
+    glfwPollEvents();
+}
+
 void Window::destroyWindow() {
     glfwDestroyWindow(windowInstance);
 }

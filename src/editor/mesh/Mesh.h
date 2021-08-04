@@ -9,6 +9,9 @@
 #include "helpers/Vertex.h"
 #include "helpers/Texture.h"
 #include "../utils/shader-manager/Shader.h"
+#include "../ui/textures/UITexture.h"
+#include "../../external/imgui/imgui.h"
+#include "../../external/imgui/imfilebrowser.h"
 
 class Mesh {
 public:
@@ -63,6 +66,27 @@ public:
 
         // always good practice to set everything back to defaults once configured.
         glActiveTexture(GL_TEXTURE0);
+    }
+
+
+    void saveTexture(ImGui::FileBrowser &textureDialog) {
+        std::cout << "!!!" << std::endl;
+        textureDialog.Open();
+
+        if (textureDialog.HasSelected())
+        {
+            std::string textureFilePath = textureDialog.GetSelected().string();
+
+            Texture texture;
+
+            UITexture new_texture_texture(textureFilePath.c_str());
+
+            texture.id = new_texture_texture.textureID;
+            texture.path = textureFilePath;
+
+            textures.push_back(texture);
+            textureDialog.ClearSelected();
+        }
     }
 
 private:

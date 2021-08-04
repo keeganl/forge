@@ -176,7 +176,7 @@ void GuiLayer::createPerformanceWindow()
 }
 
 
-void GuiLayer::drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &scenes) {
+void GuiLayer::drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &scenes, std::map<std::string, UITexture> &uiTextures, ModalManager &modalManager) {
 
     if (scenes.size() > 0)
     {
@@ -240,9 +240,9 @@ void GuiLayer::drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &sce
                                 if (m->meshes[i].textures.empty()) {
                                     ImGui::PushID("texture_");
                                     ImGui::Text("Add Texture");
-//                                    if (ImGui::ImageButton((void *) (intptr_t) default_texture, ImVec2(50, 50))) {
-//                                        m->meshes[i] = saveTexture(textureDialog, m->meshes[i]);
-//                                    }
+                                    if (ImGui::ImageButton((void *) (intptr_t) uiTextures.find("default")->second.textureID, ImVec2(50, 50))) {
+                                        m->meshes[i].saveTexture(modalManager.textureDialog);
+                                    }
                                     ImGui::PopID();
                                 }
                                 else {
@@ -639,17 +639,17 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::
     }
 }
 
-void GuiLayer::drawAssetBrowser(UIManager uiManager) {
+void GuiLayer::drawAssetBrowser(Settings &settings, std::map<std::string, UITexture> &uiTextures) {
     ImGui::Begin("Asset Browser");
     {
 
-        if (uiManager.settings.currentDirectory != uiManager.settings.startingDirectory) {
-            if (ImGui::ImageButton((void *) (intptr_t) uiManager.uiTextures.find("backArrow")->second.textureID, ImVec2(20, 20))) {
-                uiManager.settings.currentDirectory = uiManager.settings.currentDirectory.parent_path();
+        if (settings.currentDirectory != settings.startingDirectory) {
+            if (ImGui::ImageButton((void *) (intptr_t) uiTextures.find("backArrow")->second.textureID, ImVec2(20, 20))) {
+                settings.currentDirectory = settings.currentDirectory.parent_path();
             }
         }
 
-        float cellSize = uiManager.settings.thumbnailSize + uiManager.settings.padding;
+        float cellSize = settings.thumbnailSize + settings.padding;
 
         float panelWidth = ImGui::GetContentRegionAvail().x;
         int columnCount = (int)(panelWidth / cellSize);
@@ -660,18 +660,18 @@ void GuiLayer::drawAssetBrowser(UIManager uiManager) {
         ImGui::Columns(columnCount, 0, false);
 
 
-        for(auto& p: std::filesystem::directory_iterator(uiManager.settings.currentDirectory))
+        for(auto& p: std::filesystem::directory_iterator(settings.currentDirectory))
         {
-            auto relativePath = std::filesystem::relative(p.path(), uiManager.settings.startingDirectory).filename();
+            auto relativePath = std::filesystem::relative(p.path(), settings.startingDirectory).filename();
             ImGuiStyle& style = ImGui::GetStyle();
             if (p.is_directory())
             {
                 ImGui::BeginGroup();
                 {
                     ImGui::PushID(p.path().string().c_str());
-                    if (ImGui::ImageButton((void *) (intptr_t) uiManager.uiTextures.find("folder")->second.textureID, { uiManager.settings.thumbnailSize, uiManager.settings.thumbnailSize }))
+                    if (ImGui::ImageButton((void *) (intptr_t) uiTextures.find("folder")->second.textureID, { settings.thumbnailSize, settings.thumbnailSize }))
                     {
-                        uiManager.settings.currentDirectory /= p.path();
+                        settings.currentDirectory /= p.path();
                     }
                     ImGui::TextWrapped(relativePath.string().c_str());
                     ImGui::PopID();
@@ -682,9 +682,9 @@ void GuiLayer::drawAssetBrowser(UIManager uiManager) {
                 {
                     ImGui::PushID(p.path().string().c_str());
                     if (p.path().string().find(".yml") != std::string::npos) {
-                        ImGui::ImageButton((void *) (intptr_t) uiManager.uiTextures.find("yml")->second.textureID, { uiManager.settings.thumbnailSize, uiManager.settings.thumbnailSize });
+                        ImGui::ImageButton((void *) (intptr_t) uiTextures.find("yml")->second.textureID, { settings.thumbnailSize, settings.thumbnailSize });
                     } else {
-                        ImGui::ImageButton((void *) (intptr_t) uiManager.uiTextures.find("file")->second.textureID, { uiManager.settings.thumbnailSize, uiManager.settings.thumbnailSize });
+                        ImGui::ImageButton((void *) (intptr_t) uiTextures.find("file")->second.textureID, { settings.thumbnailSize, settings.thumbnailSize });
                     }
                     ImGui::Text(relativePath.string().c_str());
                     ImGui::PopID();

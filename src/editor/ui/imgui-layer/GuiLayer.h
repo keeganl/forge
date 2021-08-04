@@ -10,7 +10,7 @@
 #include "../../settings/Settings.h"
 #include "../ModalManager/ModalManager.h"
 #include "../../utils/Serializer.h"
-#include "../UIManager.h"
+#include "../textures/UITexture.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -24,12 +24,12 @@ namespace GuiLayer {
     void startFrame();
     void createDockspace();
     void createPerformanceWindow();
-    void drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &scenes);
+    void drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &scenes, std::map<std::string, UITexture> &uiTextures, ModalManager &modalManager);
     void drawCameraPropertiesPanel(Camera &camera);
     void drawDebugEventsPanel();
     void drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Camera &camera, Keymap &keymap, std::vector<std::shared_ptr<Model>> &scenes);
     void drawMenubar(Settings &settings, ModalManager &modalManager, std::vector<std::shared_ptr<Model>> &scenes, Camera &camera);
-    void drawAssetBrowser(UIManager uiManager);
+    void drawAssetBrowser(Settings &settings, std::map<std::string, UITexture> &uiTextures);
 };
 
 
