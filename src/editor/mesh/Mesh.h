@@ -9,6 +9,9 @@
 #include "helpers/Vertex.h"
 #include "helpers/Texture.h"
 #include "../utils/shader-manager/Shader.h"
+#include "../ui/textures/UITexture.h"
+#include "../../external/imgui/imgui.h"
+#include "../../external/imgui/imfilebrowser.h"
 
 class Mesh {
 public:
@@ -18,6 +21,7 @@ public:
     std::vector<Texture> textures;
     unsigned int VAO;
 
+    Mesh();
 
     Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) {
         this->vertices = vertices;
@@ -63,6 +67,20 @@ public:
 
         // always good practice to set everything back to defaults once configured.
         glActiveTexture(GL_TEXTURE0);
+    }
+
+
+    void saveTexture(std::string textureFilePath) {
+        std::cout << "!!!" << std::endl;
+
+        Texture texture;
+
+        UITexture new_texture_texture(textureFilePath.c_str());
+
+        texture.id = new_texture_texture.textureID;
+        texture.path = textureFilePath;
+
+        textures.push_back(texture);
     }
 
 private:

@@ -40,22 +40,22 @@ add_executable(forge
         external/imgui/imfilebrowser.h
         external/stb/stb_image.h
         external/entt/single_include/entt/entt.hpp
-        src/utils/imgui-layer/GuiLayer.cpp
-        src/utils/imgui-layer/GuiLayer.h
-        src/utils/shader-manager/Shader.cpp
-        src/utils/shader-manager/Shader.h
-        src/camera/Camera.h
-        src/camera/Camera.cpp
-        src/mesh/helpers/Vertex.h
-        src/mesh/helpers/Texture.h
-        src/mesh/Mesh.h
-        src/renderer/Renderer.cpp
-        src/renderer/Renderer.h
-        src/mesh/Model.h external/imgui/imfilebrowser.h
-        src/light/Light.cpp
-        src/light/Light.h
-        src/utils/Serializer.cpp
-        src/utils/Serializer.h)
+        src/editor/ui/imgui-layer/GuiLayer.cpp
+        src/editor/ui/imgui-layer/GuiLayer.h
+        src/editor/utils/shader-manager/Shader.cpp
+        src/editor/utils/shader-manager/Shader.h
+        src/editor/camera/Camera.h
+        src/editor/camera/Camera.cpp
+        src/editor/mesh/helpers/Vertex.h
+        src/editor/mesh/helpers/Texture.h
+        src/editor/mesh/Mesh.h
+        src/editor/renderer/Renderer.cpp
+        src/editor/renderer/Renderer.h
+        src/editor/mesh/Model.h external/imgui/imfilebrowser.h
+        src/editor/light/Light.cpp
+        src/editor/light/Light.h
+        src/editor/utils/Serializer.cpp
+        src/editor/utils/Serializer.h src/editor/Editor.cpp src/editor/Editor.h src/editor/settings/Settings.cpp src/editor/settings/Settings.h src/editor/settings/keymap/Keymap.cpp src/editor/settings/keymap/Keymap.h src/editor/ui/ModalManager/ModalManager.cpp src/editor/ui/ModalManager/ModalManager.h src/editor/window/Window.cpp src/editor/window/Window.h src/editor/renderer/framebuffer/Framebuffer.cpp src/editor/renderer/framebuffer/Framebuffer.h src/editor/ui/textures/UITexture.cpp src/editor/ui/textures/UITexture.h src/editor/skybox/Skybox.cpp src/editor/skybox/Skybox.h src/editor/ui/UIManager.cpp src/editor/ui/UIManager.h src/editor/renderer/screen/ScreenTexture.cpp src/editor/renderer/screen/ScreenTexture.h)
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")
