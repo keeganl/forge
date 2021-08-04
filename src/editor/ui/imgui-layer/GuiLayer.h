@@ -10,8 +10,7 @@
 #include "../../settings/Settings.h"
 #include "../ModalManager/ModalManager.h"
 #include "../../utils/Serializer.h"
-
-
+#include "../UIManager.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -30,6 +29,7 @@ namespace GuiLayer {
     void drawDebugEventsPanel();
     void drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Camera &camera, Keymap &keymap, std::vector<std::shared_ptr<Model>> &scenes);
     void drawMenubar(Settings &settings, ModalManager &modalManager, std::vector<std::shared_ptr<Model>> &scenes, Camera &camera);
+    void drawAssetBrowser(UIManager uiManager);
 };
 
 

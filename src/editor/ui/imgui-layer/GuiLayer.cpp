@@ -638,3 +638,64 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::
         }
     }
 }
+
+void GuiLayer::drawAssetBrowser(UIManager uiManager) {
+    ImGui::Begin("Asset Browser");
+    {
+
+        if (uiManager.settings.currentDirectory != uiManager.settings.startingDirectory) {
+            if (ImGui::ImageButton((void *) (intptr_t) uiManager.uiTextures.find("backArrow")->second.textureID, ImVec2(20, 20))) {
+                uiManager.settings.currentDirectory = uiManager.settings.currentDirectory.parent_path();
+            }
+        }
+
+        float cellSize = uiManager.settings.thumbnailSize + uiManager.settings.padding;
+
+        float panelWidth = ImGui::GetContentRegionAvail().x;
+        int columnCount = (int)(panelWidth / cellSize);
+        if (columnCount < 1)
+            columnCount = 1;
+
+
+        ImGui::Columns(columnCount, 0, false);
+
+
+        for(auto& p: std::filesystem::directory_iterator(uiManager.settings.currentDirectory))
+        {
+            auto relativePath = std::filesystem::relative(p.path(), uiManager.settings.startingDirectory).filename();
+            ImGuiStyle& style = ImGui::GetStyle();
+            if (p.is_directory())
+            {
+                ImGui::BeginGroup();
+                {
+                    ImGui::PushID(p.path().string().c_str());
+                    if (ImGui::ImageButton((void *) (intptr_t) uiManager.uiTextures.find("folder")->second.textureID, { uiManager.settings.thumbnailSize, uiManager.settings.thumbnailSize }))
+                    {
+                        uiManager.settings.currentDirectory /= p.path();
+                    }
+                    ImGui::TextWrapped(relativePath.string().c_str());
+                    ImGui::PopID();
+                }
+                ImGui::EndGroup();
+            } else {
+                ImGui::BeginGroup();
+                {
+                    ImGui::PushID(p.path().string().c_str());
+                    if (p.path().string().find(".yml") != std::string::npos) {
+                        ImGui::ImageButton((void *) (intptr_t) uiManager.uiTextures.find("yml")->second.textureID, { uiManager.settings.thumbnailSize, uiManager.settings.thumbnailSize });
+                    } else {
+                        ImGui::ImageButton((void *) (intptr_t) uiManager.uiTextures.find("file")->second.textureID, { uiManager.settings.thumbnailSize, uiManager.settings.thumbnailSize });
+                    }
+                    ImGui::Text(relativePath.string().c_str());
+                    ImGui::PopID();
+                }
+                ImGui::EndGroup();
+            }
+            ImGui::NextColumn();
+        }
+
+        ImGui::Columns(1);
+
+    }
+    ImGui::End();
+}
