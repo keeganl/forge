@@ -15,6 +15,7 @@ public:
     GLFWwindow* windowInstance;
 
     Window();
+    void swapAndPoll();
     void destroyWindow();
 };
 

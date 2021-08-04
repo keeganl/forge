@@ -5,11 +5,11 @@
 #ifndef FORGE_EDITOR_H
 #define FORGE_EDITOR_H
 
-#include "../../external/imgui/imgui.h"
-#include "../../external/imgui/imgui_impl_glfw.h"
-#include "../../external/imgui/imgui_impl_opengl3.h"
-#include "../../external/imgui/imgui_internal.h"
-#include "../../external/imgui/imfilebrowser.h"
+//#include "../../external/imgui/imgui.h"
+//#include "../../external/imgui/imgui_impl_glfw.h"
+//#include "../../external/imgui/imgui_impl_opengl3.h"
+//#include "../../external/imgui/imgui_internal.h"
+//#include "../../external/imgui/imfilebrowser.h"
 
 
 #include <assimp/Importer.hpp>      // C++ importer interface
@@ -33,6 +33,8 @@
 #include "settings/Settings.h"
 #include "utils/Serializer.h"
 #include "skybox/Skybox.h"
+#include "renderer/framebuffer/Framebuffer.h"
+#include "renderer/screen/ScreenTexture.h"
 
 #include <iostream>
 #include <windows.h>

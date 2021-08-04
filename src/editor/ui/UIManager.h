@@ -7,8 +7,10 @@
 
 
 #include "../window/Window.h"
-#include "imgui-layer/GuiLayer.h"
 #include "textures/UITexture.h"
+#include "ModalManager/ModalManager.h"
+#include "../settings/Settings.h"
+#include "imgui-layer/GuiLayer.h"
 
 class UIManager {
 public:

@@ -20,28 +20,6 @@ bool checkLights(std::vector<std::shared_ptr<Model>> const &scenes) {
     return res;
 }
 
-Mesh saveTexture(ImGui::FileBrowser &textureDialog, Mesh &m) {
-    textureDialog.Open();
-
-    if (textureDialog.HasSelected())
-    {
-        std::string textureFilePath = textureDialog.GetSelected().string();
-
-        Texture texture;
-
-        UITexture new_texture_texture(textureFilePath.c_str());
-
-        texture.id = new_texture_texture.textureID;
-        texture.path = textureFilePath;
-
-        m.textures.push_back(texture);
-        textureDialog.ClearSelected();
-    }
-
-    return m;
-
-}
-
 
 Editor::Editor() {}
 
@@ -67,27 +45,7 @@ void Editor::run() {
 
     Skybox skybox;
 
-    float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-            // positions   // texCoords
-            -1.0f,  1.0f,  0.0f, 1.0f,
-            -1.0f, -1.0f,  0.0f, 0.0f,
-            1.0f, -1.0f,  1.0f, 0.0f,
-            -1.0f,  1.0f,  0.0f, 1.0f,
-            1.0f, -1.0f,  1.0f, 0.0f,
-            1.0f,  1.0f,  1.0f, 1.0f
-    };
-
-    // screen quad VAO
-    unsigned int quadVAO, quadVBO;
-    glGenVertexArrays(1, &quadVAO);
-    glGenBuffers(1, &quadVBO);
-    glBindVertexArray(quadVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    ScreenTexture screenTexture;
 
 
     // tell opengl for each sampler t\o which texture unit it belongs to (only has to be done once)
@@ -112,47 +70,7 @@ void Editor::run() {
     meshShader.use();
     lightShader.use();
 
-
-    // framebuffer configuration
-    // -------------------------
-    unsigned int framebuffer;
-    glGenFramebuffers(1, &framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-    // create a color attachment texture
-    unsigned int textureColorbuffer;
-    glGenTextures(1, &textureColorbuffer);
-    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // create a color attachment texture
-    unsigned  int id;
-    glGenTextures(1, &id);
-    glBindTexture(GL_TEXTURE_2D, id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, SCR_WIDTH, SCR_HEIGHT, 0, GL_RED_INTEGER, GL_INT, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-    unsigned int rbo;
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
-
-
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, id, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
-
-    // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
-    unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-    glDrawBuffers(2, attachments);
-
-    // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    Framebuffer framebuffer;
 
     // render loop
     // -----------
@@ -168,7 +86,7 @@ void Editor::run() {
         // render
         // ------
         // bind to framebuffer and draw scene as we normally would to color texture
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.framebuffer);
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
         if (useMultiSampling) {
             glEnable(GL_MULTISAMPLE);
@@ -254,8 +172,8 @@ void Editor::run() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         screenShader.use();
-        glBindVertexArray(quadVAO);
-        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+        glBindVertexArray(screenTexture.quadVAO);
+        glBindTexture(GL_TEXTURE_2D, framebuffer.textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
 
@@ -267,17 +185,15 @@ void Editor::run() {
         GuiLayer::createPerformanceWindow();
         ImGui::ShowMetricsWindow(&uiManager.settings.showDebugWindows);
         ImGui::ShowDemoWindow(&uiManager.settings.showDebugWindows);
-
         GuiLayer::drawMenubar(uiManager.settings, uiManager.modalManager, scenes, camera);
-        GuiLayer::drawAssetBrowser(uiManager);
-        GuiLayer::drawModelPropertiesPanel(scenes);
+        GuiLayer::drawAssetBrowser(uiManager.settings, uiManager.uiTextures);
+        GuiLayer::drawModelPropertiesPanel(scenes, uiManager.uiTextures, uiManager.modalManager);
         GuiLayer::drawCameraPropertiesPanel(camera);
-        GuiLayer::drawScenePanel(textureColorbuffer, uiManager.settings.firstMouse, uiManager.settings.deltaTime, camera, uiManager.settings.keymap, scenes);
+        GuiLayer::drawScenePanel(framebuffer.textureColorbuffer, uiManager.settings.firstMouse, uiManager.settings.deltaTime, camera, uiManager.settings.keymap, scenes);
         GuiLayer::drawDebugEventsPanel();
 
         lightShader.use();
         meshShader.use();
-
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -292,21 +208,15 @@ void Editor::run() {
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backup_current_context);
         }
-
-
-
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
-        glfwSwapBuffers(uiManager.window.windowInstance);
-        glfwPollEvents();
+        uiManager.window.swapAndPoll();
     }
 
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
-    glDeleteFramebuffers(1, &framebuffer);
-    glDeleteVertexArrays(1, &quadVAO);
+    glDeleteFramebuffers(1, &framebuffer.framebuffer);
+    glDeleteVertexArrays(1, &screenTexture.quadVAO);
     glDeleteBuffers(1, &skybox.skyboxVAO);
-    glDeleteBuffers(1, &quadVBO);
+    glDeleteBuffers(1, &screenTexture.quadVBO);
 
     meshShader.destroy();
     lightShader.destroy();
@@ -321,5 +231,4 @@ void Editor::run() {
     uiManager.window.destroyWindow();
 
     glfwTerminate();
-//    return 0;
 }
