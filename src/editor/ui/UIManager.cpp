@@ -6,9 +6,7 @@
 
 
 UIManager::UIManager() {
-    this->window = Window();
     GuiLayer::createContext(this->window.windowInstance);
-    this->settings = Settings();
     UIManager::loadDefaultTextures();
 }
 
