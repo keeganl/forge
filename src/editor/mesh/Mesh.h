@@ -21,6 +21,7 @@ public:
     std::vector<Texture> textures;
     unsigned int VAO;
 
+    Mesh();
 
     Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) {
         this->vertices = vertices;
@@ -69,24 +70,17 @@ public:
     }
 
 
-    void saveTexture(ImGui::FileBrowser &textureDialog) {
+    void saveTexture(std::string textureFilePath) {
         std::cout << "!!!" << std::endl;
-        textureDialog.Open();
 
-        if (textureDialog.HasSelected())
-        {
-            std::string textureFilePath = textureDialog.GetSelected().string();
+        Texture texture;
 
-            Texture texture;
+        UITexture new_texture_texture(textureFilePath.c_str());
 
-            UITexture new_texture_texture(textureFilePath.c_str());
+        texture.id = new_texture_texture.textureID;
+        texture.path = textureFilePath;
 
-            texture.id = new_texture_texture.textureID;
-            texture.path = textureFilePath;
-
-            textures.push_back(texture);
-            textureDialog.ClearSelected();
-        }
+        textures.push_back(texture);
     }
 
 private:
