@@ -8,8 +8,9 @@
 
 #include <filesystem>
 #include "keymap/Keymap.h"
+#include "../utils/SerializableInterface.h"
 
-class Settings {
+class Settings : public SerializableInterface {
 public:
     Keymap keymap;
     float nearClipping = 0.1f;
@@ -35,6 +36,9 @@ public:
              bool firstMouse, bool showSettingsWindow, bool openScene, bool saveScene, bool openSavePopup,
              bool openFilePopup, bool openSettingsPopup, float deltaTime, float lastFrame,
              const std::filesystem::path &startingDirectory, const std::filesystem::path &currentDirectory);
+
+    void serialize(const std::string &filepath) override;
+    void deserialize() override;
 };
 
 
