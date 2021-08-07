@@ -48,6 +48,11 @@ Window::Window()
         std::cout << "Failed to initialize GLAD" << std::endl;
 //        return -1;
     }
+
+    GLFWimage images[1];
+    images[0].pixels = stbi_load("../assets/editor/icon.png", &images[0].width, &images[0].height, 0, 4); //rgba channels
+    glfwSetWindowIcon(windowInstance, 1, images);
+    stbi_image_free(images[0].pixels);
 }
 
 void Window::swapAndPoll() {
