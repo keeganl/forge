@@ -551,15 +551,29 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::
         ImGui::Text("Settings");
         ImGui::Separator();
 
-        ImGui::SliderFloat("Thumbnail Size", &settings.thumbnailSize, 16, 512);
+        ImGui::SliderFloat("Near Clipping", &settings.nearClipping, 0.0f, 1.0f);
+        ImGui::SliderFloat("Far Clipping", &settings.farClipping, 100.0f, 1000.0f);
+
         ImGui::SliderFloat("Padding", &settings.padding, 0, 32);
+        ImGui::Separator();
+        ImGui::Text("Key Bindings");
+        for (auto const& [key, val] : settings.keymap.keys) {
+            ImGui::PushID(&key);
+            ImGui::Text(key.c_str());
+            ImGui::SameLine(25.0f);
+            ImGui::Text(std::to_string(val).c_str());
+            ImGui::PopID();
+        }
 //        ImGui::Checkbox("Set MSAA", &useMultiSampling);
 
 
-        if (ImGui::Button("Revert", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
         ImGui::SetItemDefaultFocus();
         ImGui::SameLine();
-        if (ImGui::Button("Apply", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+        if (ImGui::Button("Save", ImVec2(120, 0))) {
+            settings.serialize("settings.yml");
+            ImGui::CloseCurrentPopup();
+        }
         ImGui::EndPopup();
     }
 
