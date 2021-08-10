@@ -71,13 +71,13 @@ public:
 
 
     void saveTexture(std::string textureFilePath) {
-        std::cout << "!!!" << std::endl;
 
         Texture texture;
 
         UITexture new_texture_texture(textureFilePath.c_str());
 
         texture.id = new_texture_texture.textureID;
+        texture.type = "texture_diffuse";
         texture.path = textureFilePath;
 
         textures.push_back(texture);

@@ -5,12 +5,32 @@ layout (location = 1) out int id;
 
 in vec3 Normal;
 in vec3 FragPos;
+in vec2 TexCoord;
+uniform sampler2D texture1;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec3 lightColor;
-uniform vec3 objectColor;
+uniform vec4 objectColor;
 uniform int objectId;
+
+struct Material {
+   vec3 ambient;
+   vec3 diffuse;
+   vec3 specular;
+   float shininess;
+};
+
+struct Light {
+   vec3 position;
+
+   vec3 ambient;
+   vec3 diffuse;
+   vec3 specular;
+};
+
+uniform Material material;
+uniform Light light;
 
 void main()
 {
@@ -31,7 +51,10 @@ void main()
    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
    vec3 specular = specularStrength * spec * lightColor;
 
-   vec3 result = (ambient + diffuse + specular) * objectColor;
-   FragColor = vec4(result, 1.0);
+   // textures
+   vec4 texColor = texture(texture1, TexCoord);
+
+//   vec3 result = (ambient + diffuse + specular) * objectColor;
+   FragColor = texColor * objectColor;
    id = objectId;
-} 
+}

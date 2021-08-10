@@ -114,16 +114,6 @@ void Editor::run() {
                     glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i]->rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
             );
 
-
-
-            if (scenes[i]->meshes[0].textures.empty()) {
-                scenes[i]->mixVal = 0.0f;
-                meshShader.set1DFloat("mixVal", scenes[i]->mixVal);
-            } else {
-                scenes[i]->mixVal = 1.0f;
-                meshShader.set1DFloat("mixVal", scenes[i]->mixVal);
-            }
-
             // update the scene if there are no lights
             if (!checkLights(scenes)) {
                 float reset = 0;
@@ -153,9 +143,11 @@ void Editor::run() {
                     meshShader.setMat4("projection", projection);
                     meshShader.setMat4("view", view);
                     meshShader.set3DFloat("scaleAxes", scenes[i]->scaleAxes.x, scenes[i]->scaleAxes.y, scenes[i]->scaleAxes.z);
-                    meshShader.set3DFloat("objectColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
+                    meshShader.set4DFloat("objectColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z, scenes[i]->color.w);
                     meshShader.set1DFloat("scale", scenes[i]->uniformScale);
                     meshShader.setInt("objectId", i);
+                    meshShader.setInt("texture1", 0);
+
                     scenes[i]->Draw(meshShader);
                 }
             }
