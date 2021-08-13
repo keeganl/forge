@@ -11,7 +11,7 @@
 
 #include "../utils/shader-manager/Shader.h"
 #include "Mesh.h"
-
+#include "material/Material.h"
 
 
 class Model  {
@@ -32,13 +32,14 @@ public:
     glm::vec3 pos;
     glm::vec4 color;
     std::string modelPath;
+    Material material;
 
     Model () {}
 
     Model(std::string const &path,
           bool gamma = false,
           std::string const &type = "model",
-          glm::vec4 const &objColor = glm::vec4(1.0, 0.0, 0.0, 1.0),
+          glm::vec4 const &objColor = glm::vec4(1.0, 1.0, 1.0, 1.0),
           glm::vec3 const &pos = glm::vec3(0.0f, 0.0f, 0.0f),
           glm::mat4 const &matrix = glm::mat4(1.0f),
           glm::vec3 const &rotationVals =  glm::vec3(0.0f, 0.0f, 0.0f),

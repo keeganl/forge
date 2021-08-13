@@ -361,16 +361,17 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
         // Because I use the texture from OpenGL, I need to invert the V from the UV.
         ImGui::Image((ImTextureID)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
         if (ImGui::IsWindowHovered()) {
+            if((io.KeyShift && ImGui::IsKeyPressed((keymap.keys["a"])))) {
+                std::cout << "adding mesh" << std::endl;
+                ImGui::OpenPopup("Add object");
+            }
 
             {
 //                    std::cout <<  io.MousePos.x << "  " << io.MousePos.y << std::endl;
 
                 if ( ImGui::IsMouseDown(0) && io.KeyShift) {
 
-                    if((io.KeyShift && ImGui::IsKeyPressed((keymap.keys["a"])))) {
-                        std::cout << "adding mesh" << std::endl;
-                        ImGui::OpenPopup("Add object");
-                    }
+
 
                     if (firstMouse)
                     {
@@ -438,7 +439,7 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
 
 //                    std::cout << "pixelData: " << pixelData << std::endl;
 
-                if (ImGui::IsMouseDown(0) && pixelData <= scenes.size()) {
+                if (ImGui::IsMouseDown(2) && pixelData <= scenes.size()) {
                     scenes[pixelData]->selected = !scenes[pixelData]->selected;
                 }
 
@@ -593,6 +594,7 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::
             ImGui::OpenPopup("Add object");
         }
 
+        // FIXME: pull into new function
         if (ImGui::BeginPopupModal("Add object", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::Text("Select a model to generate");
