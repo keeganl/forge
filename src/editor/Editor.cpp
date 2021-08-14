@@ -117,14 +117,19 @@ void Editor::run() {
             // update the scene if there are no lights
             if (!checkLights(scenes)) {
                 float reset = 0;
-                meshShader.set3DFloat("lightPos",reset, reset, reset);
+                meshShader.set3DFloat("light.position",reset, reset, reset);
                 meshShader.set3DFloat("lightColor", reset, reset, reset);
                 meshShader.set3DFloat("viewPos", camera.pos.x, camera.pos.y, camera.pos.z);
             } else {
                 if (scenes[i]->objectType == "light") {
+                    glm::vec3 lightColor(scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
+                    glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
+                    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
                     meshShader.use();
-                    meshShader.set3DFloat("lightPos", scenes[i]->pos.x, scenes[i]->pos.y, scenes[i]->pos.z);
-                    meshShader.set3DFloat("lightColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
+                    meshShader.set3DFloat("light.ambient", ambientColor.x, ambientColor.y, ambientColor.z);
+                    meshShader.set3DFloat("light.diffuse", diffuseColor.x, diffuseColor.y, diffuseColor.z);
+                    meshShader.set3DFloat("light.specular", 1.0f, 1.0f, 1.0f);
+                    meshShader.set3DFloat("light.pos", scenes[i]->pos.x, scenes[i]->pos.y, scenes[i]->pos.z);
                     meshShader.set3DFloat("viewPos", camera.pos.x, camera.pos.y, camera.pos.z);
 
                     lightShader.use();
@@ -146,7 +151,12 @@ void Editor::run() {
                     meshShader.set4DFloat("objectColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z, scenes[i]->color.w);
                     meshShader.set1DFloat("scale", scenes[i]->uniformScale);
                     meshShader.setInt("objectId", i);
-                    meshShader.setInt("texture1", 0);
+                    meshShader.setInt("material.diffuse", 0);
+                    //FIXME (materials): these need to be pulled from the materials on the object, probably loaded into an easier to manipulate structure
+                    meshShader.set3DFloat("material.ambient", 1.0f, 0.5f, 0.31f);
+                    meshShader.set3DFloat("material.diffuse", 1.0f, 0.5f, 0.31f);
+                    meshShader.set3DFloat("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
+                    meshShader.set1DFloat("material.shininess", 32.0f);
 
                     scenes[i]->Draw(meshShader);
                 }

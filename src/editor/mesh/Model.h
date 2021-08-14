@@ -153,6 +153,29 @@ private:
         // diffuse: texture_diffuseN
         // specular: texture_specularN
         // normal: texture_normalN
+        // FIXME (materials): move to Materials class
+        auto a = material->mProperties;
+        auto b = material->mNumProperties;
+        aiString name;
+        material->Get(AI_MATKEY_NAME, name);
+
+        aiColor3D diffuse;
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
+
+        material->RemoveProperty(AI_MATKEY_COLOR_DIFFUSE);
+
+        aiColor3D newTest(1.0, 0.0, 0.0);
+        material->AddProperty(&newTest, 1, AI_MATKEY_COLOR_DIFFUSE);
+
+        aiColor3D specular;
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, specular);
+
+        aiColor3D ambient;
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, ambient);
+
+        aiColor3D emissive;
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, emissive);
+
 
         // 1. diffuse maps
         std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");

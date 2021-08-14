@@ -110,8 +110,8 @@ void Shader::set2DFloat(const std::string &name, float &x, float &y) const
 {
     glUniform2f(glGetUniformLocation(ID, name.c_str()), x, y);
 }
-
-void Shader::set3DFloat(const std::string &name, float &x, float &y, float &z) const
+// FIXME (materials): laziness from testing the learnOpenGL implementation
+void Shader::set3DFloat(const std::string &name, float x, float y, float z) const
 {
     glUniform3f(glGetUniformLocation(ID, name.c_str()), x, y, z);
 }

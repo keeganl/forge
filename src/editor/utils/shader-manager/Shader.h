@@ -30,7 +30,8 @@ public:
     void setInt(const std::string &name, int value) const;
     void set1DFloat(const std::string &name, float value) const;
     void set2DFloat(const std::string &name, float &x, float &y) const;
-    void set3DFloat(const std::string &name, float &x, float &y, float &z) const;
+    // FIXME (materials): laziness from testing the learnOpenGL implementation
+    void set3DFloat(const std::string &name, float x, float y, float z) const;
     void set4DFloat(const std::string &name, float &x, float &y, float &z, float &w) const;
     void setMat4(const std::string &name, glm::mat4 &matrix) const;
 };
