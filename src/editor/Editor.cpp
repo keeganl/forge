@@ -9,17 +9,6 @@
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
-// TODO: move vector of meshes to it's own object
-bool checkLights(std::vector<std::shared_ptr<Model>> const &scenes) {
-    bool res = false;
-    for (std::shared_ptr<Model> m : scenes) {
-        if (m->objectType == "light") {
-            res = true;
-        }
-    }
-    return res;
-}
-
 
 Editor::Editor() {}
 
@@ -63,9 +52,7 @@ void Editor::run() {
     skybox.shader.setInt("skybox", 0);
     screenShader.setInt("screenTexture", 0);
 
-    std::vector<std::shared_ptr<Model>> scenes;
-
-    Camera camera;
+    Scene scene;
 
     meshShader.use();
     lightShader.use();
@@ -97,69 +84,74 @@ void Editor::run() {
 
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
-        if (camera.orthographic) {
+        if (scene.camera.orthographic) {
             projection = glm::ortho(0.0f, (float) SCR_WIDTH, 0.0f, (float) SCR_HEIGHT, uiManager.settings.nearClipping, uiManager.settings.farClipping);
         } else {
-            projection = glm::perspective(glm::radians(camera.fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, uiManager.settings.nearClipping, uiManager.settings.farClipping);
+            projection = glm::perspective(glm::radians(scene.camera.fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, uiManager.settings.nearClipping, uiManager.settings.farClipping);
         }
-        view = glm::lookAt(camera.pos, camera.pos + camera.front, camera.up);
+        view = glm::lookAt(scene.camera.pos, scene.camera.pos + scene.camera.front, scene.camera.up);
 
-        for (int i = 0; i < scenes.size(); i++) {
+        for (int i = 0; i < scene.models.size(); i++) {
             // calculate the model matrix for each object and pass it to shader before drawing
-            scenes[i]->modelMatrix = glm::translate(glm::mat4(1.0f), scenes[i]->pos);
+            scene.models[i]->modelMatrix = glm::translate(glm::mat4(1.0f), scene.models[i]->pos);
 
-            scenes[i]->modelMatrix =  scenes[i]->modelMatrix * (
-                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i]->rotateFloats.x), glm::vec3(1.0,0.0f,0.0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i]->rotateFloats.y), glm::vec3(0.0,1.0f,0.0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(scenes[i]->rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
+            scene.models[i]->modelMatrix =  scene.models[i]->modelMatrix * (
+                    glm::rotate(glm::mat4(1.0f), glm::radians(scene.models[i]->rotateFloats.x), glm::vec3(1.0,0.0f,0.0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(scene.models[i]->rotateFloats.y), glm::vec3(0.0,1.0f,0.0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(scene.models[i]->rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
             );
 
-            // update the scene if there are no lights
-            if (!checkLights(scenes)) {
+            if(scene.lights.empty()) {
                 float reset = 0;
                 meshShader.set3DFloat("light.position",reset, reset, reset);
                 meshShader.set3DFloat("lightColor", reset, reset, reset);
-                meshShader.set3DFloat("viewPos", camera.pos.x, camera.pos.y, camera.pos.z);
+                meshShader.set3DFloat("viewPos", scene.camera.pos.x, scene.camera.pos.y, scene.camera.pos.z);
             } else {
-                if (scenes[i]->objectType == "light") {
-                    glm::vec3 lightColor(scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
+                for (std::shared_ptr<Light> &light : scene.lights) {
+                    scene.lights[i]->modelMatrix = glm::translate(glm::mat4(1.0f), scene.lights[i]->pos);
+
+                    scene.lights[i]->modelMatrix =  scene.lights[i]->modelMatrix * (
+                            glm::rotate(glm::mat4(1.0f), glm::radians(scene.lights[i]->rotateFloats.x), glm::vec3(1.0,0.0f,0.0f)) *
+                            glm::rotate(glm::mat4(1.0f), glm::radians(scene.lights[i]->rotateFloats.y), glm::vec3(0.0,1.0f,0.0f)) *
+                            glm::rotate(glm::mat4(1.0f), glm::radians(scene.lights[i]->rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
+                            );
+                    glm::vec3 lightColor(light->color.x, light->color.y, light->color.z);
                     glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
                     glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
                     meshShader.use();
                     meshShader.set3DFloat("light.ambient", ambientColor.x, ambientColor.y, ambientColor.z);
                     meshShader.set3DFloat("light.diffuse", diffuseColor.x, diffuseColor.y, diffuseColor.z);
                     meshShader.set3DFloat("light.specular", 1.0f, 1.0f, 1.0f);
-                    meshShader.set3DFloat("light.pos", scenes[i]->pos.x, scenes[i]->pos.y, scenes[i]->pos.z);
-                    meshShader.set3DFloat("viewPos", camera.pos.x, camera.pos.y, camera.pos.z);
+                    meshShader.set3DFloat("light.pos", light->pos.x, light->pos.y, light->pos.z);
+                    meshShader.set3DFloat("viewPos", scene.camera.pos.x, scene.camera.pos.y, scene.camera.pos.z);
 
                     lightShader.use();
-                    lightShader.setMat4("model", scenes[i]->modelMatrix);
+                    lightShader.setMat4("model", light->modelMatrix);
                     lightShader.setMat4("view", view);
                     lightShader.setMat4("projection", projection);
-                    lightShader.set3DFloat("lightColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z);
+                    lightShader.set3DFloat("lightColor", light->color.x, light->color.y, light->color.z);
 
-                    scenes[i]->Draw(lightShader);
+                    light->Draw(lightShader);
                 }
-                else if (scenes[i]->objectType == "model"){
-                    meshShader.use();
-                    scenes[i]->modelMatrix = glm::scale(scenes[i]->modelMatrix, scenes[i]->scaleAxes);
 
-                    meshShader.setMat4("model", scenes[i]->modelMatrix);
-                    meshShader.setMat4("projection", projection);
-                    meshShader.setMat4("view", view);
-                    meshShader.set3DFloat("scaleAxes", scenes[i]->scaleAxes.x, scenes[i]->scaleAxes.y, scenes[i]->scaleAxes.z);
-                    meshShader.set4DFloat("objectColor", scenes[i]->color.x, scenes[i]->color.y, scenes[i]->color.z, scenes[i]->color.w);
-                    meshShader.set1DFloat("scale", scenes[i]->uniformScale);
-                    meshShader.setInt("objectId", i);
-                    meshShader.setInt("material.diffuse", 0);
-                    //FIXME (materials): these need to be pulled from the materials on the object, probably loaded into an easier to manipulate structure
-                    meshShader.set3DFloat("material.ambient", 1.0f, 0.5f, 0.31f);
-                    meshShader.set3DFloat("material.diffuse", 1.0f, 0.5f, 0.31f);
-                    meshShader.set3DFloat("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
-                    meshShader.set1DFloat("material.shininess", 32.0f);
+                meshShader.use();
+                scene.models[i]->modelMatrix = glm::scale(scene.models[i]->modelMatrix, scene.models[i]->scaleAxes);
 
-                    scenes[i]->Draw(meshShader);
-                }
+                meshShader.setMat4("model", scene.models[i]->modelMatrix);
+                meshShader.setMat4("projection", projection);
+                meshShader.setMat4("view", view);
+                meshShader.set3DFloat("scaleAxes", scene.models[i]->scaleAxes.x, scene.models[i]->scaleAxes.y, scene.models[i]->scaleAxes.z);
+                meshShader.set4DFloat("objectColor", scene.models[i]->color.x, scene.models[i]->color.y, scene.models[i]->color.z, scene.models[i]->color.w);
+                meshShader.set1DFloat("scale", scene.models[i]->uniformScale);
+                meshShader.setInt("objectId", i);
+                meshShader.setInt("material.diffuse", 0);
+                //FIXME (materials): these need to be pulled from the materials on the object, probably loaded into an easier to manipulate structure
+                meshShader.set3DFloat("material.ambient", 1.0f, 0.5f, 0.31f);
+                meshShader.set3DFloat("material.diffuse", 1.0f, 0.5f, 0.31f);
+                meshShader.set3DFloat("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
+                meshShader.set1DFloat("material.shininess", 32.0f);
+
+                scene.models[i]->Draw(meshShader);
             }
         }
 
@@ -187,11 +179,11 @@ void Editor::run() {
         GuiLayer::createPerformanceWindow();
         ImGui::ShowMetricsWindow(&uiManager.settings.showDebugWindows);
         ImGui::ShowDemoWindow(&uiManager.settings.showDebugWindows);
-        GuiLayer::drawMenubar(uiManager.settings, uiManager.modalManager, scenes, camera);
+        GuiLayer::drawMenubar(uiManager.settings, uiManager.modalManager, scene);
         GuiLayer::drawAssetBrowser(uiManager.settings, uiManager.uiTextures);
-        GuiLayer::drawModelPropertiesPanel(scenes, uiManager.uiTextures, uiManager.modalManager);
-        GuiLayer::drawCameraPropertiesPanel(camera);
-        GuiLayer::drawScenePanel(framebuffer.textureColorbuffer, uiManager.settings.firstMouse, uiManager.settings.deltaTime, camera, uiManager.settings.keymap, scenes);
+        GuiLayer::drawModelPropertiesPanel(scene, uiManager.uiTextures, uiManager.modalManager);
+        GuiLayer::drawCameraPropertiesPanel(scene.camera);
+        GuiLayer::drawScenePanel(framebuffer.textureColorbuffer, uiManager.settings.firstMouse, uiManager.settings.deltaTime, scene, uiManager.settings.keymap);
         GuiLayer::drawDebugEventsPanel();
 
         lightShader.use();
@@ -225,7 +217,8 @@ void Editor::run() {
     screenShader.destroy();
 
     // clear the scenes vector
-    scenes.clear();
+    scene.models.clear();
+    scene.lights.clear();
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     GuiLayer::cleanup();

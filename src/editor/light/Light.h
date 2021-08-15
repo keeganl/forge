@@ -13,8 +13,9 @@
 
 class Light : public Model {
 public:
-    float diffuse;
-    float ambient;
+    glm::vec3 diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
+    glm::vec3 ambient = glm::vec3(0.05f, 0.05f, 0.05f);
+    glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
 
     Light(std::string const &path,
           bool gamma = false,
