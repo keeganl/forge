@@ -91,67 +91,99 @@ void Editor::run() {
         }
         view = glm::lookAt(scene.camera.pos, scene.camera.pos + scene.camera.front, scene.camera.up);
 
-        for (int i = 0; i < scene.models.size(); i++) {
-            // calculate the model matrix for each object and pass it to shader before drawing
-            scene.models[i]->modelMatrix = glm::translate(glm::mat4(1.0f), scene.models[i]->pos);
+        if (!scene.lights.empty() || !scene.models.empty()) {
 
-            scene.models[i]->modelMatrix =  scene.models[i]->modelMatrix * (
-                    glm::rotate(glm::mat4(1.0f), glm::radians(scene.models[i]->rotateFloats.x), glm::vec3(1.0,0.0f,0.0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(scene.models[i]->rotateFloats.y), glm::vec3(0.0,1.0f,0.0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(scene.models[i]->rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
-            );
+            for (int i = 0; i < scene.models.size(); i++) {
+                // calculate the model matrix for each object and pass it to shader before drawing
+                scene.models[i]->modelMatrix = glm::translate(glm::mat4(1.0f), scene.models[i]->pos);
 
-            if(scene.lights.empty()) {
-                float reset = 0;
-                meshShader.set3DFloat("light.position",reset, reset, reset);
-                meshShader.set3DFloat("lightColor", reset, reset, reset);
-                meshShader.set3DFloat("viewPos", scene.camera.pos.x, scene.camera.pos.y, scene.camera.pos.z);
-            } else {
-                for (std::shared_ptr<Light> &light : scene.lights) {
-                    scene.lights[i]->modelMatrix = glm::translate(glm::mat4(1.0f), scene.lights[i]->pos);
+                scene.models[i]->modelMatrix =  scene.models[i]->modelMatrix * (
+                        glm::rotate(glm::mat4(1.0f), glm::radians(scene.models[i]->rotateFloats.x), glm::vec3(1.0,0.0f,0.0f)) *
+                        glm::rotate(glm::mat4(1.0f), glm::radians(scene.models[i]->rotateFloats.y), glm::vec3(0.0,1.0f,0.0f)) *
+                        glm::rotate(glm::mat4(1.0f), glm::radians(scene.models[i]->rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
+                        );
 
-                    scene.lights[i]->modelMatrix =  scene.lights[i]->modelMatrix * (
-                            glm::rotate(glm::mat4(1.0f), glm::radians(scene.lights[i]->rotateFloats.x), glm::vec3(1.0,0.0f,0.0f)) *
-                            glm::rotate(glm::mat4(1.0f), glm::radians(scene.lights[i]->rotateFloats.y), glm::vec3(0.0,1.0f,0.0f)) *
-                            glm::rotate(glm::mat4(1.0f), glm::radians(scene.lights[i]->rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
-                            );
-                    glm::vec3 lightColor(light->color.x, light->color.y, light->color.z);
-                    glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
-                    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
-                    meshShader.use();
-                    meshShader.set3DFloat("light.ambient", ambientColor.x, ambientColor.y, ambientColor.z);
-                    meshShader.set3DFloat("light.diffuse", diffuseColor.x, diffuseColor.y, diffuseColor.z);
-                    meshShader.set3DFloat("light.specular", 1.0f, 1.0f, 1.0f);
-                    meshShader.set3DFloat("light.pos", light->pos.x, light->pos.y, light->pos.z);
+                if(scene.lights.empty()) {
+                    float reset = 0;
+                    meshShader.set3DFloat("light.position",reset, reset, reset);
+                    meshShader.set3DFloat("lightColor", reset, reset, reset);
                     meshShader.set3DFloat("viewPos", scene.camera.pos.x, scene.camera.pos.y, scene.camera.pos.z);
+                } else {
+                    for (int i = 0; i < scene.lights.size(); i++) {
+                        scene.lights[i]->modelMatrix = glm::translate(glm::mat4(1.0f), scene.lights[i]->pos);
 
-                    lightShader.use();
-                    lightShader.setMat4("model", light->modelMatrix);
-                    lightShader.setMat4("view", view);
-                    lightShader.setMat4("projection", projection);
-                    lightShader.set3DFloat("lightColor", light->color.x, light->color.y, light->color.z);
+                        if (scene.lights[i]->objectType == "directional_light") {
+                            meshShader.set3DFloat("dirLight.direction", scene.lights[i]->direction.x, scene.lights[i]->direction.y, scene.lights[i]->direction.z);
+                            meshShader.set3DFloat("dirLight.ambient",  scene.lights[i]->ambient.x,  scene.lights[i]->diffuse.y,  scene.lights[i]->diffuse.z);
+                            meshShader.set3DFloat("dirLight.diffuse",  scene.lights[i]->diffuse.x,  scene.lights[i]->diffuse.y,  scene.lights[i]->diffuse.z);
+                            meshShader.set3DFloat("dirLight.specular",  scene.lights[i]->specular.x,  scene.lights[i]->specular.y,  scene.lights[i]->specular.z);
+                        }
+                        if ( scene.lights[i]->objectType == "spot_light") {
+                            meshShader.set3DFloat("spotLight.position", scene.camera.pos.x, scene.camera.pos.y, scene.camera.pos.z);
+                            meshShader.set3DFloat("spotLight.direction", scene.camera.front.x, scene.camera.front.y, scene.camera.front.z);
+                            meshShader.set3DFloat("spotLight.ambient",  scene.lights[i]->ambient.x,  scene.lights[i]->diffuse.y,  scene.lights[i]->diffuse.z);
+                            meshShader.set3DFloat("spotLight.diffuse",  scene.lights[i]->diffuse.x,  scene.lights[i]->diffuse.y,  scene.lights[i]->diffuse.z);
+                            meshShader.set3DFloat("spotLight.specular",  scene.lights[i]->specular.x,  scene.lights[i]->specular.y,  scene.lights[i]->specular.z);
+                            meshShader.set1DFloat("spotLight.constant", scene.lights[i]->constant);
+                            meshShader.set1DFloat("spotLight.linear", scene.lights[i]->linear);
+                            meshShader.set1DFloat("spotLight.quadratic", scene.lights[i]->quadratic);
+                            meshShader.set1DFloat("spotLight.cutOff", scene.lights[i]->innerCutoff);
+                            meshShader.set1DFloat("spotLight.outerCutOff", scene.lights[i]->outerCutoff);
+                        }
+                        if ( scene.lights[i]->objectType == "point_light") {
+                            meshShader.set3DFloat("pointLight.position",  scene.lights[i]->pos.x,  scene.lights[i]->pos.y,  scene.lights[i]->pos.z);
+                            meshShader.set3DFloat("pointLight.ambient",  scene.lights[i]->ambient.x,  scene.lights[i]->diffuse.y,  scene.lights[i]->diffuse.z);
+                            meshShader.set3DFloat("pointLight.diffuse",  scene.lights[i]->diffuse.x,  scene.lights[i]->diffuse.y,  scene.lights[i]->diffuse.z);
+                            meshShader.set3DFloat("pointLight.specular",  scene.lights[i]->specular.x,  scene.lights[i]->specular.y,  scene.lights[i]->specular.z);
+                            meshShader.set1DFloat("pointLight.constant", scene.lights[i]->constant);
+                            meshShader.set1DFloat("pointLight.linear", scene.lights[i]->linear);
+                            meshShader.set1DFloat("pointLight.quadratic", scene.lights[i]->quadratic);
+                        }
 
-                    light->Draw(lightShader);
+
+                        scene.lights[i]->modelMatrix =  scene.lights[i]->modelMatrix * (
+                                glm::rotate(glm::mat4(1.0f), glm::radians(scene.lights[i]->rotateFloats.x), glm::vec3(1.0,0.0f,0.0f)) *
+                                glm::rotate(glm::mat4(1.0f), glm::radians(scene.lights[i]->rotateFloats.y), glm::vec3(0.0,1.0f,0.0f)) *
+                                glm::rotate(glm::mat4(1.0f), glm::radians(scene.lights[i]->rotateFloats.z), glm::vec3(1.0,0.0f,1.0f))
+                                );
+                        glm::vec3 lightColor( scene.lights[i]->color.x,  scene.lights[i]->color.y,  scene.lights[i]->color.z);
+                        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
+                        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
+                        meshShader.use();
+                        meshShader.set3DFloat("light.ambient", ambientColor.x, ambientColor.y, ambientColor.z);
+                        meshShader.set3DFloat("light.diffuse", diffuseColor.x, diffuseColor.y, diffuseColor.z);
+                        meshShader.set3DFloat("light.specular", 1.0f, 1.0f, 1.0f);
+                        meshShader.set3DFloat("light.pos",  scene.lights[i]->pos.x,  scene.lights[i]->pos.y,  scene.lights[i]->pos.z);
+                        meshShader.set3DFloat("viewPos", scene.camera.pos.x, scene.camera.pos.y, scene.camera.pos.z);
+
+                        lightShader.use();
+                        lightShader.setMat4("model",  scene.lights[i]->modelMatrix);
+                        lightShader.setMat4("view", view);
+                        lightShader.setMat4("projection", projection);
+                        lightShader.set3DFloat("lightColor",  scene.lights[i]->color.x,  scene.lights[i]->color.y,  scene.lights[i]->color.z);
+
+                         scene.lights[i]->Draw(lightShader);
+                    }
+
+                    meshShader.use();
+                    scene.models[i]->modelMatrix = glm::scale(scene.models[i]->modelMatrix, scene.models[i]->scaleAxes);
+
+                    meshShader.setMat4("model", scene.models[i]->modelMatrix);
+                    meshShader.setMat4("projection", projection);
+                    meshShader.setMat4("view", view);
+                    meshShader.set3DFloat("scaleAxes", scene.models[i]->scaleAxes.x, scene.models[i]->scaleAxes.y, scene.models[i]->scaleAxes.z);
+                    meshShader.set4DFloat("objectColor", scene.models[i]->color.x, scene.models[i]->color.y, scene.models[i]->color.z, scene.models[i]->color.w);
+                    meshShader.set1DFloat("scale", scene.models[i]->uniformScale);
+                    meshShader.setInt("objectId", i);
+                    meshShader.setInt("material.diffuse", 0);
+                    //FIXME (materials): these need to be pulled from the materials on the object, probably loaded into an easier to manipulate structure
+                    meshShader.set3DFloat("material.ambient", 1.0f, 0.5f, 0.31f);
+                    meshShader.set3DFloat("material.diffuse", 1.0f, 0.5f, 0.31f);
+                    meshShader.set3DFloat("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
+                    meshShader.set1DFloat("material.shininess", 32.0f);
+
+                    scene.models[i]->Draw(meshShader);
                 }
-
-                meshShader.use();
-                scene.models[i]->modelMatrix = glm::scale(scene.models[i]->modelMatrix, scene.models[i]->scaleAxes);
-
-                meshShader.setMat4("model", scene.models[i]->modelMatrix);
-                meshShader.setMat4("projection", projection);
-                meshShader.setMat4("view", view);
-                meshShader.set3DFloat("scaleAxes", scene.models[i]->scaleAxes.x, scene.models[i]->scaleAxes.y, scene.models[i]->scaleAxes.z);
-                meshShader.set4DFloat("objectColor", scene.models[i]->color.x, scene.models[i]->color.y, scene.models[i]->color.z, scene.models[i]->color.w);
-                meshShader.set1DFloat("scale", scene.models[i]->uniformScale);
-                meshShader.setInt("objectId", i);
-                meshShader.setInt("material.diffuse", 0);
-                //FIXME (materials): these need to be pulled from the materials on the object, probably loaded into an easier to manipulate structure
-                meshShader.set3DFloat("material.ambient", 1.0f, 0.5f, 0.31f);
-                meshShader.set3DFloat("material.diffuse", 1.0f, 0.5f, 0.31f);
-                meshShader.set3DFloat("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
-                meshShader.set1DFloat("material.shininess", 32.0f);
-
-                scene.models[i]->Draw(meshShader);
             }
         }
 

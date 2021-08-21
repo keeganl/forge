@@ -10,6 +10,9 @@
 #include "../ModalManager/ModalManager.h"
 #include "../../utils/Serializer.h"
 #include "../textures/UITexture.h"
+#include "../../light/directional/DirectionalLight.h"
+#include "../../light/point/PointLight.h"
+#include "../../light/spot/SpotLight.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
