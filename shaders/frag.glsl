@@ -87,11 +87,11 @@ void main()
    // this fragment's final color.
    // == =====================================================
    // phase 1: directional lighting
-   vec3 result = CalcDirLight(dirLight, norm, viewDir);
-   // phase 2: point lights
-   result += CalcPointLight(pointLight, norm, FragPos, viewDir);
-   // phase 3: spot light
-   result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
+//   vec3 result = CalcDirLight(dirLight, norm, viewDir);
+//   // phase 2: point lights
+//   vec3 result = CalcPointLight(pointLight, norm, FragPos, viewDir);
+//   // phase 3: spot light
+  vec3 result = CalcSpotLight(spotLight, norm, FragPos, viewDir);
 
    FragColor = vec4(result, 1.0);
    id = objectId;

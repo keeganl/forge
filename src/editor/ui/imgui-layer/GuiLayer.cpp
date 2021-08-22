@@ -185,62 +185,74 @@ void GuiLayer::drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITe
         ImGui::Begin("Mesh Properties");
         {
             int i = 0;
-            for (auto &m: scene.models) {
-                if (m->selected) {
-                    bool tNode = ImGui::TreeNodeEx((void*)"###", ImGuiTreeNodeFlags_DefaultOpen, "%s", m->modelName.c_str());
+            for (auto &model: scene.models) {
+                if (model->selected) {
+                    bool tNode = ImGui::TreeNodeEx((void*)"###", ImGuiTreeNodeFlags_DefaultOpen, "%s", model->modelName.c_str());
                     if (tNode) {
                         ImGui::PushID(i);
                         ImGui::AlignTextToFramePadding();
                         ImGui::Text("Name");
                         ImGui::SameLine();
-                        ImGui::InputText("", m->modelName.data(), m->modelName.size()+1);
+                        ImGui::InputText("", model->modelName.data(), model->modelName.size()+1);
                         ImGui::PopID();
 
 
                         if (ImGui::CollapsingHeader("Mesh Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
-                            ImGui::PushID(&m->uniformScale);
+                            ImGui::PushID(&model->uniformScale);
                             ImGui::AlignTextToFramePadding();
                             ImGui::Text("Uniform Scale");
                             ImGui::SameLine();
-                            ImGui::SliderFloat("\t", &m->uniformScale, 1.0f, 20.0f);
+                            ImGui::SliderFloat("\t", &model->uniformScale, 1.0f, 20.0f);
                             ImGui::PopID();
 
-                            ImGui::PushID(&m->scaleAxes[0]);
+                            ImGui::PushID(&model->scaleAxes[0]);
                             ImGui::AlignTextToFramePadding();
                             ImGui::Text("Axis Scale");
                             ImGui::SameLine();
-                            ImGui::SliderFloat3("\t", &m->scaleAxes[0], 0.0, 100.0);
+                            ImGui::SliderFloat3("\t", &model->scaleAxes[0], 0.0, 100.0);
                             ImGui::PopID();
 
-                            ImGui::PushID(&m->modelMatrix);
+                            ImGui::PushID(&model->modelMatrix);
                             ImGui::AlignTextToFramePadding();
                             ImGui::Text("Model Position");
                             ImGui::SameLine();
-                            ImGui::SliderFloat3("\t", &m->pos[0], -1000.0, 1000.0);
+                            ImGui::SliderFloat3("\t", &model->pos[0], -1000.0, 1000.0);
                             ImGui::PopID();
 
-                            ImGui::PushID(&m->rotateFloats[0]);
+                            ImGui::PushID(&model->rotateFloats[0]);
                             ImGui::AlignTextToFramePadding();
                             ImGui::Text("Model Rotation");
                             ImGui::SameLine();
-                            ImGui::SliderFloat3("\t", &m->rotateFloats[0], -1000.0, 1000.0);
+                            ImGui::SliderFloat3("\t", &model->rotateFloats[0], -1000.0, 1000.0);
                             ImGui::PopID();
                         }
 
                         if (ImGui::CollapsingHeader("Mesh Material", ImGuiTreeNodeFlags_DefaultOpen)) {
-                            ImGui::PushID(&m->color);
-                            ImGui::Text("Color:");
+                            ImGui::PushID(&model->material.diffuse);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Diffuse");
                             ImGui::SameLine();
-//                            HelpMarker(
-//                                    "Click on the color square to open a color picker.\n"
-//                                    "CTRL+click on individual component to input value.\n");
-                            ImGui::ColorPicker4("Mesh color", (float*)&m->color);
+                            ImGui::ColorEdit3("\t", &model->material.diffuse[0]);
                             ImGui::PopID();
 
-                            ImGui::PushID(&m->meshes[0]);
+                            ImGui::PushID(&model->material.specular);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Specular");
+                            ImGui::SameLine();
+                            ImGui::ColorEdit3("\t", &model->material.specular[0]);
+                            ImGui::PopID();
+
+                            ImGui::PushID(&model->material.ambient);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Ambient");
+                            ImGui::SameLine();
+                            ImGui::ColorEdit3("\t", &model->material.ambient[0]);
+                            ImGui::PopID();
+
+                            ImGui::PushID(&model->meshes[0]);
                             tempScenePos = i;
-                            for (int i = 0; i < m->meshes.size(); i++) {
-                                if (m->meshes[i].textures.empty()) {
+                            for (int i = 0; i < model->meshes.size(); i++) {
+                                if (model->meshes[i].textures.empty()) {
                                     ImGui::PushID("texture_");
                                     ImGui::Text("Add Texture");
                                     if (ImGui::ImageButton((void *) (intptr_t) uiTextures.find("default")->second.textureID, ImVec2(50, 50))) {
@@ -261,7 +273,7 @@ void GuiLayer::drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITe
 
                                     ImGui::Columns(columnCount, 0, false);
 
-                                    for (Texture &t : m->meshes[i].textures) {
+                                    for (Texture &t : model->meshes[i].textures) {
                                         if (ImGui::ImageButton((void *) (intptr_t) t.id, ImVec2(50, 50)))
                                             ImGui::NextColumn();
                                     }
@@ -304,37 +316,36 @@ void GuiLayer::drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITe
                         ImGui::PopID();
 
                         if (ImGui::CollapsingHeader("Light Properties", ImGuiTreeNodeFlags_DefaultOpen)) {
-                           if (light->objectType == "directional_light") {
-                               ImGui::PushID(&light->diffuse);
-                               ImGui::AlignTextToFramePadding();
-                               ImGui::Text("Diffuse");
-                               ImGui::SameLine();
-                               ImGui::ColorEdit3("\t", &light->diffuse[0]);
-                               ImGui::PopID();
+                           ImGui::Text(light->objectType.c_str());
 
-                               ImGui::PushID(&light->specular);
-                               ImGui::AlignTextToFramePadding();
-                               ImGui::Text("Specular");
-                               ImGui::SameLine();
-                               ImGui::ColorEdit3("\t", &light->specular[0]);
-                               ImGui::PopID();
 
-                               ImGui::PushID(&light->ambient);
-                               ImGui::AlignTextToFramePadding();
-                               ImGui::Text("Ambient");
-                               ImGui::SameLine();
-                               ImGui::ColorEdit3("\t", &light->ambient[0]);
-                               ImGui::PopID();
-                           } else {
+                           ImGui::PushID(&light->diffuse);
+                           ImGui::AlignTextToFramePadding();
+                           ImGui::Text("Diffuse");
+                           ImGui::SameLine();
+                           ImGui::ColorEdit3("\t", &light->diffuse[0]);
+                           ImGui::PopID();
 
-                           }
+                           ImGui::PushID(&light->specular);
+                           ImGui::AlignTextToFramePadding();
+                           ImGui::Text("Specular");
+                           ImGui::SameLine();
+                           ImGui::ColorEdit3("\t", &light->specular[0]);
+                           ImGui::PopID();
 
-                            ImGui::PushID(&light->direction);
-                            ImGui::AlignTextToFramePadding();
-                            ImGui::Text("Direction");
-                            ImGui::SameLine();
-                            ImGui::SliderFloat3("\t", &light->direction[0], -100.0f, 100.0f);
-                            ImGui::PopID();
+                           ImGui::PushID(&light->ambient);
+                           ImGui::AlignTextToFramePadding();
+                           ImGui::Text("Ambient");
+                           ImGui::SameLine();
+                           ImGui::ColorEdit3("\t", &light->ambient[0]);
+                           ImGui::PopID();
+
+                           ImGui::PushID(&light->rotateFloats[0]);
+                           ImGui::AlignTextToFramePadding();
+                           ImGui::Text("Direction");
+                           ImGui::SameLine();
+                           ImGui::SliderFloat3("\t", &light->rotateFloats[0], -1000.0, 1000.0);
+                           ImGui::PopID();
 
                             ImGui::PushID(&light->constant);
                             ImGui::AlignTextToFramePadding();
@@ -378,24 +389,6 @@ void GuiLayer::drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITe
                             ImGui::Text("Model Position");
                             ImGui::SameLine();
                             ImGui::SliderFloat3("\t", &light->pos[0], -1000.0, 1000.0);
-                            ImGui::PopID();
-
-                            ImGui::PushID(&light->rotateFloats[0]);
-                            ImGui::AlignTextToFramePadding();
-                            ImGui::Text("Model Rotation");
-                            ImGui::SameLine();
-                            ImGui::SliderFloat3("\t", &light->rotateFloats[0], -1000.0, 1000.0);
-                            ImGui::PopID();
-                        }
-
-                        if (ImGui::CollapsingHeader("Light Color", ImGuiTreeNodeFlags_DefaultOpen)) {
-                            ImGui::PushID(&light->color);
-                            ImGui::Text("Color:");
-                            ImGui::SameLine();
-                            //                            HelpMarker(
-                            //                                    "Click on the color square to open a color picker.\n"
-                            //                                    "CTRL+click on individual component to input value.\n");
-                            ImGui::ColorPicker4("Mesh color", (float*)&light->color);
                             ImGui::PopID();
                         }
 
@@ -764,7 +757,7 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, Scene
                     scene.lights.push_back(std::make_shared<PointLight>("../assets/models/primitives/cube/cube.obj"));
                 }
                 if (ImGui::Button("Spot Light")) {
-                    scene.lights.push_back(std::make_shared<SpotLight>("../assets/models/primitives/cube/cube.obj"));
+                    scene.lights.push_back(std::make_shared<SpotLight>("../assets/models/primitives/cone.obj"));
                 }
                 ImGui::TreePop();
             }
