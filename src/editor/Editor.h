@@ -5,6 +5,8 @@
 #ifndef FORGE_EDITOR_H
 #define FORGE_EDITOR_H
 
+#include "scene/Scene.h"
+
 //#include "../../external/imgui/imgui.h"
 //#include "../../external/imgui/imgui_impl_glfw.h"
 //#include "../../external/imgui/imgui_impl_opengl3.h"

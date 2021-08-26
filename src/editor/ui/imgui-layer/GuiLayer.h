@@ -4,13 +4,15 @@
 #include "../../../../external/imgui/imgui_impl_glfw.h"
 #include "../../../../external/imgui/imgui_impl_opengl3.h"
 #include "../../../../external/imgui/imgui_internal.h"
-#include "../../mesh/Model.h"
-#include "../../light/Light.h"
+#include "../../scene/Scene.h"
 #include "../../camera/Camera.h"
 #include "../../settings/Settings.h"
 #include "../ModalManager/ModalManager.h"
 #include "../../utils/Serializer.h"
 #include "../textures/UITexture.h"
+#include "../../light/directional/DirectionalLight.h"
+#include "../../light/point/PointLight.h"
+#include "../../light/spot/SpotLight.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -24,11 +26,11 @@ namespace GuiLayer {
     void startFrame();
     void createDockspace();
     void createPerformanceWindow();
-    void drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &scenes, std::map<std::string, UITexture> &uiTextures, ModalManager &modalManager);
+    void drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITexture> &uiTextures, ModalManager &modalManager);
     void drawCameraPropertiesPanel(Camera &camera);
     void drawDebugEventsPanel();
-    void drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Camera &camera, Keymap &keymap, std::vector<std::shared_ptr<Model>> &scenes);
-    void drawMenubar(Settings &settings, ModalManager &modalManager, std::vector<std::shared_ptr<Model>> &scenes, Camera &camera);
+    void drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Scene &scene, Keymap &keymap);
+    void drawMenubar(Settings &settings, ModalManager &modalManager, Scene &scene);
     void drawAssetBrowser(Settings &settings, std::map<std::string, UITexture> &uiTextures);
 };
 

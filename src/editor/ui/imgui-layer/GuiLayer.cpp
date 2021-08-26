@@ -176,71 +176,83 @@ void GuiLayer::createPerformanceWindow()
 }
 
 
-void GuiLayer::drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &scenes, std::map<std::string, UITexture> &uiTextures, ModalManager &modalManager) {
+void GuiLayer::drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITexture> &uiTextures, ModalManager &modalManager) {
 
     int tempScenePos = 0;
     int tempMeshPos = 0;
-    if (scenes.size() > 0)
+    if (!scene.models.empty() || !scene.lights.empty())
     {
         ImGui::Begin("Mesh Properties");
         {
             int i = 0;
-            for (auto &m: scenes) {
-                if (m->selected) {
-                    bool tNode = ImGui::TreeNodeEx((void*)"###", ImGuiTreeNodeFlags_DefaultOpen, "%s", m->modelName.c_str());
+            for (auto &model: scene.models) {
+                if (model->selected) {
+                    bool tNode = ImGui::TreeNodeEx((void*)"###", ImGuiTreeNodeFlags_DefaultOpen, "%s", model->modelName.c_str());
                     if (tNode) {
                         ImGui::PushID(i);
                         ImGui::AlignTextToFramePadding();
                         ImGui::Text("Name");
                         ImGui::SameLine();
-                        ImGui::InputText("", m->modelName.data(), m->modelName.size()+1);
+                        ImGui::InputText("", model->modelName.data(), model->modelName.size()+1);
                         ImGui::PopID();
 
 
                         if (ImGui::CollapsingHeader("Mesh Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
-                            ImGui::PushID(&m->uniformScale);
+                            ImGui::PushID(&model->uniformScale);
                             ImGui::AlignTextToFramePadding();
                             ImGui::Text("Uniform Scale");
                             ImGui::SameLine();
-                            ImGui::SliderFloat("\t", &m->uniformScale, 1.0f, 20.0f);
+                            ImGui::SliderFloat("\t", &model->uniformScale, 1.0f, 20.0f);
                             ImGui::PopID();
 
-                            ImGui::PushID(&m->scaleAxes[0]);
+                            ImGui::PushID(&model->scaleAxes[0]);
                             ImGui::AlignTextToFramePadding();
                             ImGui::Text("Axis Scale");
                             ImGui::SameLine();
-                            ImGui::SliderFloat3("\t", &m->scaleAxes[0], 0.0, 100.0);
+                            ImGui::SliderFloat3("\t", &model->scaleAxes[0], 0.0, 100.0);
                             ImGui::PopID();
 
-                            ImGui::PushID(&m->modelMatrix);
+                            ImGui::PushID(&model->modelMatrix);
                             ImGui::AlignTextToFramePadding();
                             ImGui::Text("Model Position");
                             ImGui::SameLine();
-                            ImGui::SliderFloat3("\t", &m->pos[0], -1000.0, 1000.0);
+                            ImGui::SliderFloat3("\t", &model->pos[0], -1000.0, 1000.0);
                             ImGui::PopID();
 
-                            ImGui::PushID(&m->rotateFloats[0]);
+                            ImGui::PushID(&model->rotateFloats[0]);
                             ImGui::AlignTextToFramePadding();
                             ImGui::Text("Model Rotation");
                             ImGui::SameLine();
-                            ImGui::SliderFloat3("\t", &m->rotateFloats[0], -1000.0, 1000.0);
+                            ImGui::SliderFloat3("\t", &model->rotateFloats[0], -1000.0, 1000.0);
                             ImGui::PopID();
                         }
 
                         if (ImGui::CollapsingHeader("Mesh Material", ImGuiTreeNodeFlags_DefaultOpen)) {
-                            ImGui::PushID(&m->color);
-                            ImGui::Text("Color:");
+                            ImGui::PushID(&model->material.diffuse);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Diffuse");
                             ImGui::SameLine();
-//                            HelpMarker(
-//                                    "Click on the color square to open a color picker.\n"
-//                                    "CTRL+click on individual component to input value.\n");
-                            ImGui::ColorPicker4("Mesh color", (float*)&m->color);
+                            ImGui::ColorEdit3("\t", &model->material.diffuse[0]);
                             ImGui::PopID();
 
-                            ImGui::PushID(&m->meshes[0]);
+                            ImGui::PushID(&model->material.specular);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Specular");
+                            ImGui::SameLine();
+                            ImGui::ColorEdit3("\t", &model->material.specular[0]);
+                            ImGui::PopID();
+
+                            ImGui::PushID(&model->material.ambient);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Ambient");
+                            ImGui::SameLine();
+                            ImGui::ColorEdit3("\t", &model->material.ambient[0]);
+                            ImGui::PopID();
+
+                            ImGui::PushID(&model->meshes[0]);
                             tempScenePos = i;
-                            for (int i = 0; i < m->meshes.size(); i++) {
-                                if (m->meshes[i].textures.empty()) {
+                            for (int i = 0; i < model->meshes.size(); i++) {
+                                if (model->meshes[i].textures.empty()) {
                                     ImGui::PushID("texture_");
                                     ImGui::Text("Add Texture");
                                     if (ImGui::ImageButton((void *) (intptr_t) uiTextures.find("default")->second.textureID, ImVec2(50, 50))) {
@@ -261,7 +273,7 @@ void GuiLayer::drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &sce
 
                                     ImGui::Columns(columnCount, 0, false);
 
-                                    for (Texture &t : m->meshes[i].textures) {
+                                    for (Texture &t : model->meshes[i].textures) {
                                         if (ImGui::ImageButton((void *) (intptr_t) t.id, ImVec2(50, 50)))
                                             ImGui::NextColumn();
                                     }
@@ -271,6 +283,112 @@ void GuiLayer::drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &sce
 
 
                             }
+                            ImGui::PopID();
+                        }
+
+                        ImGui::TreePop();
+                    }
+                }
+                ++i;
+            }
+
+            for (auto &light: scene.lights) {
+                if (light->selected) {
+                    bool tNode = ImGui::TreeNodeEx((void*)"###", ImGuiTreeNodeFlags_DefaultOpen, "%s", light->modelName.c_str());
+//                    glm::vec3 diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
+//                    glm::vec3 ambient = glm::vec3(0.05f, 0.05f, 0.05f);
+//                    glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
+//                    glm::vec3 direction = glm::vec3(0.0f, 0.0f, 1.0f);
+//                    glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
+//
+//                    float constant = 1.0f;
+//                    float linear = 0.09f;
+//                    float quadratic = 0.032f;
+//
+//                    float innerCutoff = glm::cos(glm::radians(12.5f));
+//                    float outerCutoff = glm::cos(glm::radians(15.0f));
+                    if (tNode) {
+                        ImGui::PushID(i);
+                        ImGui::AlignTextToFramePadding();
+                        ImGui::Text("Name");
+                        ImGui::SameLine();
+                        ImGui::InputText("", light->modelName.data(), light->modelName.size() + 1);
+                        ImGui::PopID();
+
+                        if (ImGui::CollapsingHeader("Light Properties", ImGuiTreeNodeFlags_DefaultOpen)) {
+                           ImGui::Text(light->objectType.c_str());
+
+
+                           ImGui::PushID(&light->diffuse);
+                           ImGui::AlignTextToFramePadding();
+                           ImGui::Text("Diffuse");
+                           ImGui::SameLine();
+                           ImGui::ColorEdit3("\t", &light->diffuse[0]);
+                           ImGui::PopID();
+
+                           ImGui::PushID(&light->specular);
+                           ImGui::AlignTextToFramePadding();
+                           ImGui::Text("Specular");
+                           ImGui::SameLine();
+                           ImGui::ColorEdit3("\t", &light->specular[0]);
+                           ImGui::PopID();
+
+                           ImGui::PushID(&light->ambient);
+                           ImGui::AlignTextToFramePadding();
+                           ImGui::Text("Ambient");
+                           ImGui::SameLine();
+                           ImGui::ColorEdit3("\t", &light->ambient[0]);
+                           ImGui::PopID();
+
+                           ImGui::PushID(&light->rotateFloats[0]);
+                           ImGui::AlignTextToFramePadding();
+                           ImGui::Text("Direction");
+                           ImGui::SameLine();
+                           ImGui::SliderFloat3("\t", &light->rotateFloats[0], -1000.0, 1000.0);
+                           ImGui::PopID();
+
+                            ImGui::PushID(&light->constant);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Constant");
+                            ImGui::SameLine();
+                            ImGui::SliderFloat("\t", &light->constant, 0.0f, 10.0f);
+                            ImGui::PopID();
+
+                            ImGui::PushID(&light->linear);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Linear");
+                            ImGui::SameLine();
+                            ImGui::SliderFloat("\t", &light->linear, 0.00f, 0.2f);
+                            ImGui::PopID();
+
+                            ImGui::PushID(&light->quadratic);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Quadratic");
+                            ImGui::SameLine();
+                            ImGui::SliderFloat("\t", &light->quadratic, 0.000f, 0.100f);
+                            ImGui::PopID();
+                        }
+
+                        if (ImGui::CollapsingHeader("Light Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+                            ImGui::PushID(&light->uniformScale);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Uniform Scale");
+                            ImGui::SameLine();
+                            ImGui::SliderFloat("\t", &light->uniformScale, 1.0f, 20.0f);
+                            ImGui::PopID();
+
+                            ImGui::PushID(&light->scaleAxes[0]);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Axis Scale");
+                            ImGui::SameLine();
+                            ImGui::SliderFloat3("\t", &light->scaleAxes[0], 0.0, 100.0);
+                            ImGui::PopID();
+
+                            ImGui::PushID(&light->modelMatrix);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Model Position");
+                            ImGui::SameLine();
+                            ImGui::SliderFloat3("\t", &light->pos[0], -1000.0, 1000.0);
                             ImGui::PopID();
                         }
 
@@ -290,7 +408,7 @@ void GuiLayer::drawModelPropertiesPanel(std::vector<std::shared_ptr<Model>> &sce
         {
             std::string texturePath = modalManager.textureDialog.GetSelected().string();
             // FIXME: feels like there must be a better way
-            scenes[tempScenePos]->meshes[tempMeshPos].saveTexture(texturePath);
+            scene.models[tempScenePos]->meshes[tempMeshPos].saveTexture(texturePath);
             modalManager.textureDialog.ClearSelected();
         }
     }
@@ -343,7 +461,7 @@ void GuiLayer::drawDebugEventsPanel() {
     ImGui::End();
 }
 
-void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Camera &camera, Keymap &keymap, std::vector<std::shared_ptr<Model>> &scenes) {
+void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Scene &scene, Keymap &keymap) {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     float lastX =  1920.0 / 2.0;
     float lastY =  1080.0 / 2.0;
@@ -386,8 +504,8 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
                     lastY = io.MousePos.y;
 
 
-                    xoffset *= camera.sensitivity;
-                    yoffset *= camera.sensitivity;
+                    xoffset *= scene.camera.sensitivity;
+                    yoffset *= scene.camera.sensitivity;
 
                     yaw += xoffset;
                     pitch += yoffset;
@@ -401,7 +519,7 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
                     front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
                     front.y = sin(glm::radians(pitch));
                     front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-                    camera.front = glm::normalize(front);
+                    scene.camera.front = glm::normalize(front);
                 }
 
                 // subtract minimum bound
@@ -439,32 +557,32 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
 
 //                    std::cout << "pixelData: " << pixelData << std::endl;
 
-                if (ImGui::IsMouseDown(2) && pixelData <= scenes.size()) {
-                    scenes[pixelData]->selected = !scenes[pixelData]->selected;
+                if (ImGui::IsMouseDown(2) && pixelData <= scene.models.size()) {
+                    scene.models[pixelData]->selected = !scene.models[pixelData]->selected;
                 }
 
             }
 
-            if (io.MouseWheel < 0 && camera.fov < 120.0f) {
-                camera.fov = camera.fov + 5.0f;
+            if (io.MouseWheel < 0 && scene.camera.fov < 120.0f) {
+                scene.camera.fov = scene.camera.fov + 5.0f;
             }
-            if (io.MouseWheel > 0 && camera.fov > 45.0f) {
-                camera.fov = camera.fov - 5.0f;
+            if (io.MouseWheel > 0 && scene.camera.fov > 45.0f) {
+                scene.camera.fov = scene.camera.fov - 5.0f;
             }
-            float frameCamSpeed = camera.speed * deltaTime;
+            float frameCamSpeed = scene.camera.speed * deltaTime;
             if (ImGui::IsKeyPressed(keymap.keys["w"])) {
 
-                camera.pos += frameCamSpeed * camera.front;
+                scene.camera.pos += frameCamSpeed * scene.camera.front;
             }
             if (ImGui::IsKeyPressed(keymap.keys["a"])) {
-                camera.pos -= frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
+                scene.camera.pos -= frameCamSpeed * glm::normalize(glm::cross(scene.camera.front, scene.camera.up));
             }
             if (ImGui::IsKeyPressed(keymap.keys["s"])) {
-                camera.pos -= frameCamSpeed * camera.front;
+                scene.camera.pos -= frameCamSpeed * scene.camera.front;
 
             }
             if (ImGui::IsKeyPressed(keymap.keys["d"])) {
-                camera.pos += frameCamSpeed * glm::normalize(glm::cross(camera.front, camera.up));
+                scene.camera.pos += frameCamSpeed * glm::normalize(glm::cross(scene.camera.front, scene.camera.up));
             }
         }
         ImGui::EndChild();
@@ -488,7 +606,7 @@ void showSettings(bool* p_open)
     ImGui::End();
 }
 
-void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::vector<std::shared_ptr<Model>> &scenes, Camera &camera) {
+void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, Scene &scene) {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     if (settings.showSettingsWindow)         { showSettings(&settings.showSettingsWindow); }
@@ -580,14 +698,28 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::
 
     ImGui::Begin("Scene Objects");
     {
-        for (int i = 0; i < scenes.size(); i++) {
-            ImGui::AlignTextToFramePadding();
-            ImGui::Selectable(scenes[i]->modelName.c_str(), scenes[i]->selected);
-            if (ImGui::IsItemClicked()) {
-                std::cout << scenes[i]->modelName.c_str() << std::endl;
-                scenes[i]->selected = !scenes[i]->selected;
+        if (!scene.models.empty()) {
+            for (int i = 0; i < scene.models.size(); i++) {
+                ImGui::AlignTextToFramePadding();
+                ImGui::Selectable(scene.models[i]->modelName.c_str(), scene.models[i]->selected);
+                if (ImGui::IsItemClicked()) {
+                    std::cout << scene.models[i]->modelName.c_str() << std::endl;
+                    scene.models[i]->selected = !scene.models[i]->selected;
+                }
             }
         }
+
+        if (!scene.lights.empty()) {
+            for (int i = 0; i < scene.lights.size(); i++) {
+                ImGui::AlignTextToFramePadding();
+                ImGui::Selectable(scene.lights[i]->modelName.c_str(), scene.lights[i]->selected);
+                if (ImGui::IsItemClicked()) {
+                    std::cout << scene.lights[i]->modelName.c_str() << std::endl;
+                    scene.lights[i]->selected = !scene.lights[i]->selected;
+                }
+            }
+        }
+
         if(ImGui::Button("Add object")) {
 
             std::cout << "adding mesh" << std::endl;
@@ -600,19 +732,36 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::
             ImGui::Text("Select a model to generate");
             ImGui::Separator();
 
+            if (ImGui::TreeNodeEx("Primitives", ImGuiTreeNodeFlags_DefaultOpen)) {
+                if (ImGui::Button("Cube")) {
+                    scene.models.push_back(std::make_shared<Model>("../assets/models/primitives/cube/cube.obj"));
+                }
+                if (ImGui::Button("Cylinder")) {
+                    scene.models.push_back(std::make_shared<Model>("../assets/models/primitives/cylinder.obj"));
+                }
+                if (ImGui::Button("Plane")) {
+                    scene.models.push_back(std::make_shared<Model>("../assets/models/primitives/plane.obj"));
+                }
+                ImGui::TreePop();
+            }
 
-            if (ImGui::Button("Cube")) {
-                scenes.push_back(std::make_shared<Model>("../assets/models/primitives/cube/cube.obj"));
+            if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+
+                if (ImGui::Button("Light")) {
+                    scene.lights.push_back(std::make_shared<Light>("../assets/models/primitives/cube/cube.obj"));
+                }
+                if (ImGui::Button("Directional Light")) {
+                    scene.lights.push_back(std::make_shared<DirectionalLight>("../assets/models/primitives/cone.obj"));
+                }
+                if (ImGui::Button("Point Light")) {
+                    scene.lights.push_back(std::make_shared<PointLight>("../assets/models/primitives/cube/cube.obj"));
+                }
+                if (ImGui::Button("Spot Light")) {
+                    scene.lights.push_back(std::make_shared<SpotLight>("../assets/models/primitives/cone.obj"));
+                }
+                ImGui::TreePop();
             }
-            if (ImGui::Button("Cylinder")) {
-                scenes.push_back(std::make_shared<Model>("../assets/models/primitives/cylinder.obj"));
-            }
-            if (ImGui::Button("Plane")) {
-                scenes.push_back(std::make_shared<Model>("../assets/models/primitives/plane.obj"));
-            }
-            if (ImGui::Button("Light")) {
-                scenes.push_back(std::make_shared<Light>("../assets/models/primitives/cube/cube.obj"));
-            }
+
             if (ImGui::Button("Import")) {
                 modalManager.fileDialog.Open();
             }
@@ -626,13 +775,19 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::
     }
     ImGui::End();
 
-    if (ImGui::IsKeyPressed(settings.keymap.keys["del"])) {
+if (ImGui::IsKeyPressed(settings.keymap.keys["del"])) {
         std::cout << "delete mesh" << std::endl;
-        scenes.erase(
-                std::remove_if(scenes.begin(), scenes.end(), [](std::shared_ptr<Model> const model) {
+        scene.models.erase(
+                std::remove_if(scene.models.begin(), scene.models.end(), [](std::shared_ptr<Model> const model) {
                     return model->selected;
                 }),
-                scenes.end());
+                scene.models.end());
+
+        scene.lights.erase(
+                std::remove_if(scene.lights.begin(), scene.lights.end(), [](std::shared_ptr<Light> const light) {
+                    return light->selected;
+                }),
+                scene.lights.end());
     }
 
     {
@@ -641,7 +796,7 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::
 
         if (modalManager.fileDialog.HasSelected())
         {
-            scenes.push_back(std::make_shared<Model>(modalManager.fileDialog.GetSelected().string()));
+            scene.models.push_back(std::make_shared<Model>(modalManager.fileDialog.GetSelected().string()));
             modalManager.fileDialog.ClearSelected();
         }
 
@@ -653,7 +808,7 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::
 
         if (modalManager.saveDialog.HasSelected())
         {
-            Serializer serializer = Serializer(scenes, camera);
+            Serializer serializer = Serializer(scene.models, scene.camera);
             serializer.Serialize( modalManager.saveDialog.GetSelected().string() + ".yml");
             modalManager.saveDialog.ClearSelected();
         }
@@ -664,8 +819,8 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, std::
 
         if (modalManager.sceneDialog.HasSelected())
         {
-            Serializer serializer = Serializer(scenes, camera);
-            scenes = serializer.Deserialize(modalManager.sceneDialog.GetSelected().string());
+            Serializer serializer = Serializer(scene.models, scene.camera);
+            scene.models = serializer.Deserialize(modalManager.sceneDialog.GetSelected().string());
             modalManager.sceneDialog.ClearSelected();
         }
     }
