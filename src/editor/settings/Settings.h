@@ -17,6 +17,8 @@ public:
     float farClipping = 1000.0f;
     float padding = 16.0f;
     float thumbnailSize = 48.0f;
+    float exposure = 1.0f;
+    bool hdr = true;
     bool firstMouse = true;
     bool showDebugWindows = true;
     bool showSettingsWindow = false;
