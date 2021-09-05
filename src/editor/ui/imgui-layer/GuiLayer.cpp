@@ -319,25 +319,11 @@ void GuiLayer::drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITe
                            ImGui::Text(light->objectType.c_str());
 
 
-                           ImGui::PushID(&light->diffuse);
-                           ImGui::AlignTextToFramePadding();
-                           ImGui::Text("Diffuse");
-                           ImGui::SameLine();
-                           ImGui::ColorEdit3("\t", &light->diffuse[0]);
-                           ImGui::PopID();
-
-                           ImGui::PushID(&light->specular);
-                           ImGui::AlignTextToFramePadding();
-                           ImGui::Text("Specular");
-                           ImGui::SameLine();
-                           ImGui::ColorEdit3("\t", &light->specular[0]);
-                           ImGui::PopID();
-
                            ImGui::PushID(&light->ambient);
                            ImGui::AlignTextToFramePadding();
                            ImGui::Text("Ambient");
                            ImGui::SameLine();
-                           ImGui::ColorEdit3("\t", &light->ambient[0]);
+                           ImGui::DragFloat("\t", &light->ambient);
                            ImGui::PopID();
 
                            ImGui::PushID(&light->rotateFloats[0]);
@@ -366,6 +352,13 @@ void GuiLayer::drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITe
                             ImGui::Text("Quadratic");
                             ImGui::SameLine();
                             ImGui::SliderFloat("\t", &light->quadratic, 0.000f, 0.100f);
+                            ImGui::PopID();
+
+                            ImGui::PushID(&light->color);
+                            ImGui::AlignTextToFramePadding();
+                            ImGui::Text("Color");
+                            ImGui::SameLine();
+                            ImGui::ColorPicker3("\t", &light->color[0]);
                             ImGui::PopID();
                         }
 

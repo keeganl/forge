@@ -14,10 +14,11 @@
 // Light needs to be abstracted from model
 class Light : public Model {
 public:
-    glm::vec3 diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
-    glm::vec3 ambient = glm::vec3(0.05f, 0.05f, 0.05f);
-    glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
-    glm::vec3 direction = glm::vec3(0.0f, 0.0f, 1.0f);
+    glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 color = glm::vec3(1.0f, 0.0f, 0.0f);
+    float ambient = 0.25f;
+    float coneAngle = 30.0f;
+    float attenuation = 0.1f;
 
     float constant = 1.0f;
     float linear = 0.09f;
