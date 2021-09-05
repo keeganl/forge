@@ -666,6 +666,9 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, Scene
         ImGui::SliderFloat("Near Clipping", &settings.nearClipping, 0.0f, 1.0f);
         ImGui::SliderFloat("Far Clipping", &settings.farClipping, 100.0f, 1000.0f);
 
+        ImGui::Checkbox("HDR", &settings.hdr);
+        ImGui::SliderFloat("Exposure", &settings.exposure, 0.0f, 10.0f);
+
         ImGui::SliderFloat("Padding", &settings.padding, 0, 32);
         ImGui::Separator();
         ImGui::Text("Key Bindings");

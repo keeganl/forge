@@ -180,10 +180,14 @@ void Editor::run() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         screenShader.use();
+        screenShader.setBool("hdr", uiManager.settings.hdr);
+        screenShader.set1DFloat("exposure", uiManager.settings.exposure);
         glBindVertexArray(screenTexture.quadVAO);
         glBindTexture(GL_TEXTURE_2D, framebuffer.textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
+
+        std::cout << "hdr: " << ( uiManager.settings.hdr ? "on" : "off") << "| exposure: " <<  uiManager.settings.exposure << std::endl;
 
 
         ImGuiIO& io = ImGui::GetIO(); (void)io;
