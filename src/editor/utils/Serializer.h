@@ -10,16 +10,16 @@
 #include "../mesh/Model.h"
 #include "../camera/Camera.h"
 #include "../light/Light.h"
+#include "../scene/Scene.h"
 
 class Serializer {
 public:
-    Serializer(const std::vector<std::shared_ptr<Model>> &c, const Camera &camera);
+    Serializer(const Scene &scene);
 
     void Serialize(const std::string& filepath);
-    std::vector<std::shared_ptr<Model>> Deserialize(const std::string& filepath);
+    Scene Deserialize(const std::string& filepath);
 private:
-    std::vector<std::shared_ptr<Model>> components;
-    Camera cam;
+    Scene scene;
 
 
 };

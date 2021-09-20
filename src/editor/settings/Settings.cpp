@@ -55,6 +55,8 @@ void Settings::serialize(const std::string &filepath) {
     out << YAML::Key << "showSettingsWindow" << YAML::Value << showSettingsWindow;
     out << YAML::Key << "startingDirectory" << YAML::Value << startingDirectory.string();
     out << YAML::Key << "currentDirectory" << YAML::Value << currentDirectory.string();
+    out << YAML::Key << "hdr" << YAML::Value << hdr;
+    out << YAML::Key << "exposure" << YAML::Value << currentDirectory.string();
 
     out << YAML::EndMap;
 

@@ -733,27 +733,23 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, Scene
                     scene.models.push_back(std::make_shared<Model>("../assets/models/primitives/cube/cube.obj"));
                 }
                 if (ImGui::Button("Cylinder")) {
-                    scene.models.push_back(std::make_shared<Model>("../assets/models/primitives/cylinder.obj"));
+                    scene.models.push_back(std::make_shared<Model>("../assets/models/primitives/cylinder/cylinder.obj"));
                 }
                 if (ImGui::Button("Plane")) {
-                    scene.models.push_back(std::make_shared<Model>("../assets/models/primitives/plane.obj"));
+                    scene.models.push_back(std::make_shared<Model>("../assets/models/primitives/plane/plane.obj"));
                 }
                 ImGui::TreePop();
             }
 
             if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
-
-                if (ImGui::Button("Light")) {
-                    scene.lights.push_back(std::make_shared<Light>("../assets/models/primitives/cube/cube.obj"));
-                }
                 if (ImGui::Button("Directional Light")) {
-                    scene.lights.push_back(std::make_shared<DirectionalLight>("../assets/models/primitives/cone.obj"));
+                    scene.lights.push_back(std::make_shared<DirectionalLight>("../assets/models/primitives/plane/plane.obj"));
                 }
                 if (ImGui::Button("Point Light")) {
-                    scene.lights.push_back(std::make_shared<PointLight>("../assets/models/primitives/cube/cube.obj"));
+                    scene.lights.push_back(std::make_shared<PointLight>("../assets/models/primitives/sphere/sphere.obj"));
                 }
                 if (ImGui::Button("Spot Light")) {
-                    scene.lights.push_back(std::make_shared<SpotLight>("../assets/models/primitives/cone.obj"));
+                    scene.lights.push_back(std::make_shared<SpotLight>("../assets/models/primitives/sphere/sphere.obj"));
                 }
                 ImGui::TreePop();
             }
@@ -804,7 +800,7 @@ if (ImGui::IsKeyPressed(settings.keymap.keys["del"])) {
 
         if (modalManager.saveDialog.HasSelected())
         {
-            Serializer serializer = Serializer(scene.models, scene.camera);
+            Serializer serializer = Serializer(scene);
             serializer.Serialize( modalManager.saveDialog.GetSelected().string() + ".yml");
             modalManager.saveDialog.ClearSelected();
         }
@@ -815,8 +811,8 @@ if (ImGui::IsKeyPressed(settings.keymap.keys["del"])) {
 
         if (modalManager.sceneDialog.HasSelected())
         {
-            Serializer serializer = Serializer(scene.models, scene.camera);
-            scene.models = serializer.Deserialize(modalManager.sceneDialog.GetSelected().string());
+            Serializer serializer = Serializer(scene);
+            scene = serializer.Deserialize(modalManager.sceneDialog.GetSelected().string());
             modalManager.sceneDialog.ClearSelected();
         }
     }

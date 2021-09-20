@@ -30,6 +30,16 @@ struct Camera {
             up(camUp)
     {}
 
+    Camera(float d, float d1, glm::vec3 vec1, glm::vec3 vec2, glm::vec3 vec3, glm::vec3 vec4, glm::vec3 vec5) {
+        this->fov = d;
+        this->speed = d1;
+        this->pos = vec1;
+        this->target = vec2;
+        this->direction = vec3;
+        this->front = vec4;
+        this->up = vec5;
+    }
+
 //    float& getFov();
 //    void setFov(float &newFov);
 //    float& getSpeed();
