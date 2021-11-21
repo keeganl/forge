@@ -39,8 +39,6 @@
 #include "renderer/screen/ScreenTexture.h"
 
 #include <iostream>
-#include <windows.h>
-#include <tchar.h>
 
 class Editor {
 public:

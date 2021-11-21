@@ -15,7 +15,7 @@
 class Light : public Model {
 public:
     glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f);
-    glm::vec3 color = glm::vec3(1.0f, 0.0f, 0.0f);
+    glm::vec4 color = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
     float ambient = 0.25f;
     float coneAngle = 30.0f;
     float attenuation = 0.1f;

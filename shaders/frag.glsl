@@ -25,7 +25,7 @@ uniform int numLights;
 uniform struct Light {
    vec4 position;
    vec3 direction;
-   vec3 color;
+   vec4 color;
    float coneAngle;
    float constant;
    float linear;
@@ -78,7 +78,7 @@ vec3 CalcLight(Light light, vec3 normal, vec3 surfacePos, vec3 surfaceToCamera)
    vec3 ambient = light.ambient * material.ambient;
    vec3 diffuse = diffuseCoefficient * vec3(texture(material.diffuse, TexCoord));
    vec3 specular = specularCoefficient * material.specular;
-   return light.color * (ambient + attenuation*(diffuse + specular));
+   return light.color.xyz * (ambient + attenuation*(diffuse + specular));
 
 }
 

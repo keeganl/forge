@@ -127,7 +127,7 @@ void Editor::run() {
                         meshShader.set3DFloat("viewPos", scene.camera.pos.x, scene.camera.pos.y, scene.camera.pos.z);
                         meshShader.set4DFloat("allLights[" + std::to_string(i) + "].position",  scene.lights[i]->pos.x,  scene.lights[i]->pos.y,  scene.lights[i]->pos.z, test);
                         meshShader.set3DFloat("allLights[" + std::to_string(i) + "].direction",  scene.lights[i]->rotateFloats.x,  scene.lights[i]->rotateFloats.y,  scene.lights[i]->rotateFloats.z);
-                        meshShader.set3DFloat("allLights[" + std::to_string(i) + "].color",  scene.lights[i]->color.x,  scene.lights[i]->color.y,  scene.lights[i]->color.z);
+                        meshShader.set4DFloat("allLights[" + std::to_string(i) + "].color",  scene.lights[i]->color.x,  scene.lights[i]->color.y,  scene.lights[i]->color.z, scene.lights[i]->color.w);
                         meshShader.set1DFloat("allLights[" + std::to_string(i) + "].coneAngle",  scene.lights[i]->coneAngle);
                         meshShader.set1DFloat("allLights[" + std::to_string(i) + "].constant",  scene.lights[i]->constant);
                         meshShader.set1DFloat("allLights[" + std::to_string(i) + "].linear",  scene.lights[i]->linear);

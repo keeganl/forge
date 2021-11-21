@@ -636,7 +636,7 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, Scene
 
     }
 
-    // this is a workaround for a known bug
+    // this is a workaround for a known bug in dear-imgui
     if (settings.openSavePopup) {
         modalManager.saveDialog.Open();
         settings.openSavePopup = false;
