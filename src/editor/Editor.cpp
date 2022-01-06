@@ -13,6 +13,7 @@ const unsigned int SCR_HEIGHT = 1080;
 Editor::Editor() {}
 
 void Editor::run() {
+    entt::registry registry;
     UIManager uiManager;
 
     bool useMultiSampling = false;
@@ -91,7 +92,7 @@ void Editor::run() {
         }
         view = glm::lookAt(scene.camera.pos, scene.camera.pos + scene.camera.front, scene.camera.up);
 
-        if (!scene.lights.empty() || !scene.models.empty()) {
+        if (!scene.models.empty()) {
 
             for (int i = 0; i < scene.models.size(); i++) {
                 // calculate the model matrix for each object and pass it to shader before drawing
@@ -166,6 +167,10 @@ void Editor::run() {
 
                     scene.models[i]->Draw(meshShader);
                 }
+
+                auto entity = registry.create();
+                registry.emplace<glm::vec4>(entity, scene.models[i]->color.x, scene.models[i]->color.y, scene.models[i]->color.z, scene.models[i]->color.w);
+                auto x = entity;
             }
         }
 
@@ -199,7 +204,8 @@ void Editor::run() {
         GuiLayer::drawAssetBrowser(uiManager.settings, uiManager.uiTextures);
         GuiLayer::drawModelPropertiesPanel(scene, uiManager.uiTextures, uiManager.modalManager);
         GuiLayer::drawCameraPropertiesPanel(scene.camera);
-        GuiLayer::drawScenePanel(framebuffer.textureColorbuffer, uiManager.settings.firstMouse, uiManager.settings.deltaTime, scene, uiManager.settings.keymap);
+        GuiLayer::drawScenePanel(framebuffer.textureColorbuffer, uiManager.settings.firstMouse,
+                                 uiManager.settings.deltaTime, scene, uiManager.settings.keymap);
         GuiLayer::drawDebugEventsPanel();
 
         lightShader.use();

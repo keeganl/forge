@@ -5,7 +5,12 @@
 #ifndef FORGE_EDITOR_H
 #define FORGE_EDITOR_H
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "scene/Scene.h"
+#include "../../external/entt/single_include/entt/entt.hpp"
 
 //#include "../../external/imgui/imgui.h"
 //#include "../../external/imgui/imgui_impl_glfw.h"
