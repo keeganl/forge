@@ -3,6 +3,7 @@
 //
 
 #include "GuiLayer.h"
+#include "../../Editor.h"
 
 static void HelpMarker(const char* desc)
 {
@@ -604,6 +605,10 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, Scene
 
     if (settings.showSettingsWindow)         { showSettings(&settings.showSettingsWindow); }
 
+    if(io.KeyCtrl && ImGui::IsKeyPressed(settings.keymap.keys["n"]) && !settings.openFilePopup) {
+        settings.openFilePopup = true;
+    }
+
     if(io.KeyCtrl && ImGui::IsKeyPressed(settings.keymap.keys["o"]) && !settings.openFilePopup) {
         settings.openFilePopup = true;
     }
@@ -620,6 +625,7 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, Scene
         {
             if (ImGui::BeginMenu("File"))
             {
+                if(ImGui::MenuItem("Reset Scene", "CTRL+N")) { settings.clearScenePopup = true; }
                 if(ImGui::MenuItem("Open Scene", "CTRL+O")) { settings.openFilePopup = true; }
                 if(ImGui::MenuItem("Save Scene", "CTRL+S")) { settings.openSavePopup = true; }
                 if(ImGui::MenuItem("Settings", NULL)) { settings.openSettingsPopup = true; }
@@ -637,6 +643,16 @@ void GuiLayer::drawMenubar(Settings &settings, ModalManager &modalManager, Scene
     }
 
     // this is a workaround for a known bug in dear-imgui
+    if (settings.clearScenePopup) {
+        scene = Scene();
+        settings.clearScenePopup = false;
+    }
+
+    if (settings.openSavePopup) {
+        modalManager.saveDialog.Open();
+        settings.openSavePopup = false;
+    }
+
     if (settings.openSavePopup) {
         modalManager.saveDialog.Open();
         settings.openSavePopup = false;
@@ -803,6 +819,7 @@ if (ImGui::IsKeyPressed(settings.keymap.keys["del"])) {
             Serializer serializer = Serializer(scene);
             serializer.Serialize( modalManager.saveDialog.GetSelected().string() + ".yml");
             modalManager.saveDialog.ClearSelected();
+
         }
     }
 
