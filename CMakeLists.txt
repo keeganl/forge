@@ -11,80 +11,14 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/glfw" "glfw")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/yaml-cpp" "yaml-cpp")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/assimp" "assimp")
 
+file(GLOB_RECURSE src_files "src/*.h" "src/*.cpp")
+file(GLOB imgui_files "external/imgui/*.h" "external/imgui/*.cpp")
 
 add_executable(forge
-        src/main.cpp
-        external/imgui/imconfig.h
-        external/imgui/imgui.h
-        external/imgui/imgui.cpp
-        external/imgui/imgui_demo.cpp
-        external/imgui/imgui_draw.cpp
-        external/imgui/imgui_internal.h
-        external/imgui/imgui_tables.cpp
-        external/imgui/imgui_widgets.cpp
-        external/imgui/imstb_truetype.h
-        external/imgui/imstb_textedit.h
-        external/imgui/imstb_rectpack.h
-        external/imgui/imgui_impl_glfw.h
-        external/imgui/imgui_impl_glfw.cpp
-        external/imgui/imgui_impl_opengl3.h
-        external/imgui/imgui_impl_opengl3.cpp
-        external/imgui/imgui_impl_win32.h
-        external/imgui/imgui_impl_win32.cpp
-        external/imgui/ImCurveEdit.h
-        external/imgui/ImCurveEdit.cpp
-        external/imgui/ImGradient.h
-        external/imgui/ImGradient.cpp
-        external/imgui/ImGuizmo.h
-        external/imgui/ImGuizmo.cpp
-        external/imgui/imfilebrowser.h
         external/stb/stb_image.h
         external/entt/single_include/entt/entt.hpp
-        src/editor/ui/imgui-layer/GuiLayer.cpp
-        src/editor/ui/imgui-layer/GuiLayer.h
-        src/editor/utils/shader-manager/Shader.cpp
-        src/editor/utils/shader-manager/Shader.h
-        src/editor/camera/Camera.h
-        src/editor/camera/Camera.cpp
-        src/editor/mesh/helpers/Vertex.h
-        src/editor/mesh/helpers/Texture.h
-        src/editor/mesh/Mesh.h
-        src/editor/renderer/Renderer.cpp
-        src/editor/renderer/Renderer.h
-        src/editor/mesh/Model.h external/imgui/imfilebrowser.h
-        src/editor/light/Light.cpp
-        src/editor/light/Light.h
-        src/editor/utils/Serializer.cpp
-        src/editor/utils/Serializer.h
-        src/editor/Editor.cpp src/editor/Editor.h
-        src/editor/settings/Settings.cpp
-        src/editor/settings/Settings.h
-        src/editor/settings/keymap/Keymap.cpp
-        src/editor/settings/keymap/Keymap.h
-        src/editor/ui/ModalManager/ModalManager.cpp
-        src/editor/ui/ModalManager/ModalManager.h
-        src/editor/window/Window.cpp src/editor/window/Window.h
-        src/editor/renderer/framebuffer/Framebuffer.cpp
-        src/editor/renderer/framebuffer/Framebuffer.h
-        src/editor/ui/textures/UITexture.cpp
-        src/editor/ui/textures/UITexture.h
-        src/editor/skybox/Skybox.cpp
-        src/editor/skybox/Skybox.h
-        src/editor/ui/UIManager.cpp
-        src/editor/ui/UIManager.h
-        src/editor/renderer/screen/ScreenTexture.cpp
-        src/editor/renderer/screen/ScreenTexture.h
-        src/editor/utils/SerializableInterface.h
-        src/editor/mesh/material/Material.cpp
-        src/editor/mesh/material/Material.h
-        src/editor/light/directional/DirectionalLight.cpp
-        src/editor/light/directional/DirectionalLight.h
-        src/editor/light/point/PointLight.cpp
-        src/editor/light/point/PointLight.h
-        src/editor/light/spot/SpotLight.cpp
-        src/editor/light/spot/SpotLight.h
-        src/editor/scene/Scene.cpp
-        src/editor/scene/Scene.h)
+        ${imgui_files}
+        ${src_files})
 
 set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")
