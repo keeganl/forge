@@ -29,7 +29,7 @@
 #include "ui/textures/UITexture.h"
 #include "ui/UIManager.h"
 #include "utils/shader-manager/Shader.h"
-#include "camera/Camera.h"
+#include "camera/ViewportCamera.h"
 #include "mesh/Model.h"
 #include "light/Light.h"
 #include "settings/Settings.h"
@@ -42,9 +42,32 @@
 
 class Editor {
 public:
+    UIManager uiManager;
+    Shader meshShader = Shader("../shaders/vert.glsl", "../shaders/frag.glsl");
+    Shader lightShader = Shader("../shaders/light/vert.glsl", "../shaders/light/frag.glsl");
+    Shader screenShader = Shader("../shaders/framebuffer/vert.glsl", "../shaders/framebuffer/frag.glsl");
+    Skybox skybox;
+    ScreenTexture screenTexture;
+    Scene scene;
+    Framebuffer framebuffer;
+
+
+
+
+
     Editor();
 
+    void calculateFrame();
+
+    void renderScene();
+
+    void setupUI();
+
+    void updateUI();
+
     void run();
+
+    void destroy();
 };
 
 

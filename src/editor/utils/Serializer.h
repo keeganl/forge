@@ -8,7 +8,7 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 #include "../mesh/Model.h"
-#include "../camera/Camera.h"
+#include "../camera/ViewportCamera.h"
 #include "../light/Light.h"
 #include "../scene/Scene.h"
 

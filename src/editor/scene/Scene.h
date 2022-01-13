@@ -10,13 +10,15 @@
 #include <vector>
 #include "../mesh/Model.h"
 #include "../light/Light.h"
-#include "../camera/Camera.h"
+#include "../camera/ViewportCamera.h"
+#include "entity/Entity.h"
 
 class Scene {
 public:
+    Entity entity();
     std::vector<std::shared_ptr<Model>> models;
     std::vector<std::shared_ptr<Light>> lights;
-    Camera camera;
+    ViewportCamera camera;
 
     Scene();
 };

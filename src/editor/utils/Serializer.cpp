@@ -71,7 +71,7 @@ void Serializer::Serialize(const std::string &filepath) {
     }
     out << YAML::EndSeq;
 
-    out << YAML::Key << "Camera" << YAML::Value;
+    out << YAML::Key << "ViewportCamera" << YAML::Value;
     out << YAML::BeginMap;
     out << YAML::Key << "FOV" << YAML::Value << scene.camera.fov;
     out << YAML::Key << "Speed" << YAML::Value << scene.camera.speed;
@@ -99,7 +99,7 @@ Scene Serializer::Deserialize(const std::string &filepath) {
 
     auto models = data["Models"];
     auto lights = data["Lights"];
-    auto camera = data["Camera"];
+    auto camera = data["ViewportCamera"];
     if (models) {
         for (auto m : models) {
             newScene.models.push_back(std::make_shared<Model>(
@@ -129,7 +129,7 @@ Scene Serializer::Deserialize(const std::string &filepath) {
         }
     }
     if (camera) {
-        newScene.camera = Camera(
+        newScene.camera = ViewportCamera(
                 camera["FOV"].as<float>(),
                 camera["Speed"].as<float>(),
                 glm::vec3(camera["Position"][0].as<float>(), camera["Position"][1].as<float>(), camera["Position"][2].as<float>()),

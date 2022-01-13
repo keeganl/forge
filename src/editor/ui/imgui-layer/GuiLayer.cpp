@@ -136,7 +136,7 @@ void GuiLayer::cleanup() {
 }
 
 
-void GuiLayer::startFrame()
+void GuiLayer:: startFrame()
 {
 // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
@@ -408,17 +408,17 @@ void GuiLayer::drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITe
     }
 }
 
-void GuiLayer::drawCameraPropertiesPanel(Camera &camera) {
-    ImGui::Begin("Camera Properties");
+void GuiLayer::drawCameraPropertiesPanel(ViewportCamera &camera) {
+    ImGui::Begin("ViewportCamera Properties");
     {
         ImGui::Text("Select projection mode:");
         ImGui::Text("Swap between orthographic and projection:");
         ImGui::SameLine();HelpMarker("Perspective is default.\n");
         ImGui::Checkbox("Click here", &camera.orthographic);
         ImGui::SliderFloat("FOV", &camera.fov, 45.0f, 120.0f);
-        ImGui::DragFloat3("Camera Pos", &camera.pos[0]);
-        ImGui::SliderFloat("Camera Speed", &camera.speed, 1.0f, 25.0f);
-        ImGui::SliderFloat("Camera Sensitivity", &camera.sensitivity, 0.1f, 1.0f);
+        ImGui::DragFloat3("ViewportCamera Pos", &camera.pos[0]);
+        ImGui::SliderFloat("ViewportCamera Speed", &camera.speed, 1.0f, 25.0f);
+        ImGui::SliderFloat("ViewportCamera Sensitivity", &camera.sensitivity, 0.1f, 1.0f);
         if(ImGui::Button("Reset camera")) {
             camera.pos = camera.initialPos;
         }

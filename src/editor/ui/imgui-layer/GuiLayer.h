@@ -5,7 +5,7 @@
 #include "../../../../external/imgui/imgui_impl_opengl3.h"
 #include "../../../../external/imgui/imgui_internal.h"
 #include "../../scene/Scene.h"
-#include "../../camera/Camera.h"
+#include "../../camera/ViewportCamera.h"
 #include "../../settings/Settings.h"
 #include "../ModalManager/ModalManager.h"
 #include "../../utils/Serializer.h"
@@ -27,7 +27,7 @@ namespace GuiLayer {
     void createDockspace();
     void createPerformanceWindow();
     void drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITexture> &uiTextures, ModalManager &modalManager);
-    void drawCameraPropertiesPanel(Camera &camera);
+    void drawCameraPropertiesPanel(ViewportCamera &camera);
     void drawDebugEventsPanel();
     void drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Scene &scene, Keymap &keymap);
     void drawMenubar(Settings &settings, ModalManager &modalManager, Scene &scene);
