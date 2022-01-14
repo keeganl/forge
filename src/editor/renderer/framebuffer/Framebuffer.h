@@ -10,7 +10,7 @@
 
 class Framebuffer {
 public:
-    unsigned int framebuffer, textureColorbuffer;
+    unsigned int framebuffer, textureColorbuffer, depthBuffer, depthMapTexture;
     Framebuffer();
 
 };

@@ -42,9 +42,31 @@
 
 class Editor {
 public:
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+    UIManager uiManager;
+    Shader meshShader = Shader("../shaders/vert.glsl", "../shaders/frag.glsl");
+    Shader lightShader = Shader("../shaders/light/vert.glsl", "../shaders/light/frag.glsl");
+    Shader screenShader = Shader("../shaders/framebuffer/vert.glsl", "../shaders/framebuffer/frag.glsl");
+    Skybox skybox;
+    ScreenTexture screenTexture;
+    Scene scene;
+    Framebuffer framebuffer;
+
+
+
+
+
     Editor();
 
+    void calculateFrame();
+    void renderScene();
+    void Editor::renderSceneDepth(std::shared_ptr<Light> light);
+    void drawToQuad();
+    void setupUI();
+    void updateUI();
     void run();
+    void destroy();
 };
 
 
