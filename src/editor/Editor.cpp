@@ -29,7 +29,7 @@ void Editor::setupUI() {
         GuiLayer::drawAssetBrowser(uiManager.settings, uiManager.uiTextures);
         GuiLayer::drawModelPropertiesPanel(scene, uiManager.uiTextures, uiManager.modalManager);
         GuiLayer::drawCameraPropertiesPanel(scene.camera);
-        GuiLayer::drawScenePanel(framebuffer.textureColorbuffer, uiManager.settings.firstMouse, uiManager.settings.deltaTime, scene, uiManager.settings.keymap);
+        GuiLayer::drawScenePanel(framebuffer.textureColorbuffer, uiManager.settings.firstMouse, uiManager.settings.deltaTime, scene, uiManager.settings);
         GuiLayer::drawDebugEventsPanel();
 };
 
@@ -230,7 +230,7 @@ void Editor::run() {
         GuiLayer::drawAssetBrowser(uiManager.settings, uiManager.uiTextures);
         GuiLayer::drawModelPropertiesPanel(scene, uiManager.uiTextures, uiManager.modalManager);
         GuiLayer::drawCameraPropertiesPanel(scene.camera);
-        GuiLayer::drawScenePanel(framebuffer.textureColorbuffer, uiManager.settings.firstMouse, uiManager.settings.deltaTime, scene, uiManager.settings.keymap);
+        GuiLayer::drawScenePanel(framebuffer.textureColorbuffer, uiManager.settings.firstMouse, uiManager.settings.deltaTime, scene, uiManager.settings);
         GuiLayer::drawDebugEventsPanel();
 //        setupUI();
 

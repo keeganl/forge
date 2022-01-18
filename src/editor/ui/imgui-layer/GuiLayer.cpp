@@ -316,7 +316,7 @@ void GuiLayer::drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITe
                             ImGui::AlignTextToFramePadding();
                             ImGui::Text("Axis Scale");
                             ImGui::SameLine();
-                            ImGui::DragFloat3("\t", &light->scaleAxes[0], 0.0, 100.0);
+                            ImGui::DragFloat3("\t", &light->scaleAxes[0]);
                             ImGui::PopID();
 
                             ImGui::PushID(&light->modelMatrix);
@@ -396,7 +396,7 @@ void GuiLayer::drawDebugEventsPanel() {
     ImGui::End();
 }
 
-void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Scene &scene, Keymap &keymap) {
+void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Scene &scene, Settings &settings) {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     float lastX =  1920.0 / 2.0;
     float lastY =  1080.0 / 2.0;
@@ -415,11 +415,47 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
         ImGui::Image((ImTextureID)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
 
         // get the selected entity
+        // this is bad, fix in scene hierarchy refactor
+        for (std::shared_ptr<Model> &model : scene.models) {
+            if (model->selected) {
+                ImGuizmo::SetOrthographic(false);
+                ImGuizmo::SetDrawlist();
+                float windowWidth = (float) ImGui::GetWindowWidth();
+                float windowHeight = (float) ImGui::GetWindowHeight();
+                ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+
+                glm::mat4 camView = scene.camera.view;
+                glm::mat4 camProj = scene.camera.projection;
+
+                glm::mat4 entityModelMatrix = model->modelMatrix;
+
+                manipulateMesh(settings, model, camView, camProj, entityModelMatrix);
+
+            }
+        }
+
+        for (std::shared_ptr<Light> &light : scene.lights) {
+            if (light->selected) {
+                ImGuizmo::SetOrthographic(false);
+                ImGuizmo::SetDrawlist();
+                float windowWidth = (float) ImGui::GetWindowWidth();
+                float windowHeight = (float) ImGui::GetWindowHeight();
+                ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+
+                glm::mat4 camView = scene.camera.view;
+                glm::mat4 camProj = scene.camera.projection;
+
+                glm::mat4 entityModelMatrix = light->modelMatrix;
+
+                manipulateLight(settings, light, camView, camProj, entityModelMatrix);
+
+            }
+        }
 
 
 
         if (ImGui::IsWindowHovered()) {
-            if((io.KeyShift && ImGui::IsKeyPressed((keymap.keys["a"])))) {
+            if((io.KeyShift && ImGui::IsKeyPressed((settings.keymap.keys["a"])))) {
                 std::cout << "adding mesh" << std::endl;
                 ImGui::OpenPopup("Add object");
             }
@@ -510,18 +546,18 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
                 scene.camera.fov = scene.camera.fov - 5.0f;
             }
             float frameCamSpeed = scene.camera.speed * deltaTime;
-            if (ImGui::IsKeyPressed(keymap.keys["w"])) {
+            if (ImGui::IsKeyPressed(settings.keymap.keys["w"])) {
 
                 scene.camera.pos += frameCamSpeed * scene.camera.front;
             }
-            if (ImGui::IsKeyPressed(keymap.keys["a"])) {
+            if (ImGui::IsKeyPressed(settings.keymap.keys["a"])) {
                 scene.camera.pos -= frameCamSpeed * glm::normalize(glm::cross(scene.camera.front, scene.camera.up));
             }
-            if (ImGui::IsKeyPressed(keymap.keys["s"])) {
+            if (ImGui::IsKeyPressed(settings.keymap.keys["s"])) {
                 scene.camera.pos -= frameCamSpeed * scene.camera.front;
 
             }
-            if (ImGui::IsKeyPressed(keymap.keys["d"])) {
+            if (ImGui::IsKeyPressed(settings.keymap.keys["d"])) {
                 scene.camera.pos += frameCamSpeed * glm::normalize(glm::cross(scene.camera.front, scene.camera.up));
             }
         }
@@ -529,6 +565,88 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
     }
 
     ImGui::End();
+}
+
+void GuiLayer::manipulateMesh(Settings &settings, std::shared_ptr<Model> &model, glm::mat4 &camView,
+                              glm::mat4 &camProj,  glm::mat4 &entityModelMatrix) {
+    if (ImGui::IsKeyDown(settings.keymap.keys["t"])) {
+
+        ImGuizmo::Manipulate(glm::value_ptr(camView), glm::value_ptr( camProj), ImGuizmo::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(entityModelMatrix));
+        if (ImGuizmo::IsUsing()) {
+            glm::vec3 manipulatedPos = glm::vec3(entityModelMatrix[3]);
+            if (manipulatedPos.x < settings.farClipping && manipulatedPos.y < settings.farClipping && manipulatedPos.z < settings.nearClipping) {
+                model->pos = glm::vec3(entityModelMatrix[3]);
+            }
+        }
+    }
+    if (ImGui::IsKeyDown(settings.keymap.keys["r"])) {
+        ImGuizmo::Manipulate(glm::value_ptr(camView), glm::value_ptr( camProj), ImGuizmo::ROTATE, ImGuizmo::LOCAL, glm::value_ptr(entityModelMatrix));
+        if (ImGuizmo::IsUsing()) {
+            glm::vec3 scale;
+            glm::quat rotation;
+            glm::vec3 translation;
+            glm::vec3 skew;
+            glm::vec4 perspective;
+            glm::decompose(entityModelMatrix, scale, rotation, translation, skew, perspective);
+            // FIXME: think it's gimbal locked, workaround in UI
+            glm::vec3 euler = glm::eulerAngles(rotation) * 3.14159f / 180.f;
+            std::cout << euler.x << " " << euler.y << " " << euler.z << std::endl;
+            model->rotateFloats = euler;
+        }
+    }
+    if (ImGui::IsKeyDown(settings.keymap.keys["y"])) {
+        ImGuizmo::Manipulate(glm::value_ptr(camView), glm::value_ptr( camProj), ImGuizmo::SCALE, ImGuizmo::LOCAL, glm::value_ptr(entityModelMatrix));
+        if (ImGuizmo::IsUsing()) {
+            glm::vec3 scale;
+            glm::quat rotation;
+            glm::vec3 translation;
+            glm::vec3 skew;
+            glm::vec4 perspective;
+            glm::decompose(entityModelMatrix, scale, rotation, translation, skew, perspective);
+            model->scaleAxes = scale;
+        }
+    }
+}
+
+void GuiLayer::manipulateLight(Settings &settings, std::shared_ptr<Light> &light, glm::mat4 &camView,
+                              glm::mat4 &camProj,  glm::mat4 &entityModelMatrix) {
+    if (ImGui::IsKeyDown(settings.keymap.keys["t"])) {
+
+        ImGuizmo::Manipulate(glm::value_ptr(camView), glm::value_ptr( camProj), ImGuizmo::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(entityModelMatrix));
+        if (ImGuizmo::IsUsing()) {
+            glm::vec3 manipulatedPos = glm::vec3(entityModelMatrix[3]);
+            if (manipulatedPos.x < settings.farClipping && manipulatedPos.y < settings.farClipping && manipulatedPos.z < settings.nearClipping) {
+                light->pos = glm::vec3(entityModelMatrix[3]);
+            }
+        }
+    }
+    if (ImGui::IsKeyDown(settings.keymap.keys["r"])) {
+        ImGuizmo::Manipulate(glm::value_ptr(camView), glm::value_ptr( camProj), ImGuizmo::ROTATE, ImGuizmo::LOCAL, glm::value_ptr(entityModelMatrix));
+        if (ImGuizmo::IsUsing()) {
+            glm::vec3 scale;
+            glm::quat rotation;
+            glm::vec3 translation;
+            glm::vec3 skew;
+            glm::vec4 perspective;
+            glm::decompose(entityModelMatrix, scale, rotation, translation, skew, perspective);
+            // FIXME: think it's gimbal locked, workaround in UI
+            glm::vec3 euler = glm::eulerAngles(rotation) * 3.14159f / 180.f;
+            std::cout << euler.x << " " << euler.y << " " << euler.z << std::endl;
+            light->rotateFloats = euler;
+        }
+    }
+    if (ImGui::IsKeyDown(settings.keymap.keys["y"])) {
+        ImGuizmo::Manipulate(glm::value_ptr(camView), glm::value_ptr( camProj), ImGuizmo::SCALE, ImGuizmo::LOCAL, glm::value_ptr(entityModelMatrix));
+        if (ImGuizmo::IsUsing()) {
+            glm::vec3 scale;
+            glm::quat rotation;
+            glm::vec3 translation;
+            glm::vec3 skew;
+            glm::vec4 perspective;
+            glm::decompose(entityModelMatrix, scale, rotation, translation, skew, perspective);
+            light->scaleAxes = scale;
+        }
+    }
 }
 
 void showSettings(bool* p_open)
