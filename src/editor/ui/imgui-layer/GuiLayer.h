@@ -4,6 +4,7 @@
 #include "../../../../external/imgui/imgui_impl_glfw.h"
 #include "../../../../external/imgui/imgui_impl_opengl3.h"
 #include "../../../../external/imgui/imgui_internal.h"
+#include "../../../../external/imgui/ImGuizmo.h"
 #include "../../scene/Scene.h"
 #include "../../camera/Camera.h"
 #include "../../settings/Settings.h"

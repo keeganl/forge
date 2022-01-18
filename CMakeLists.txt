@@ -13,10 +13,11 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/assimp" "assimp")
 
 file(GLOB_RECURSE src_files "src/*.h" "src/*.cpp")
 file(GLOB imgui_files "external/imgui/*.h" "external/imgui/*.cpp")
+file(GLOB stb "external/stb/*.h")
 
 add_executable(forge
-        external/stb/stb_image.h
         external/entt/single_include/entt/entt.hpp
+        ${stb}
         ${imgui_files}
         ${src_files})
 

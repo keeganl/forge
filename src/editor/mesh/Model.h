@@ -32,6 +32,7 @@ public:
     glm::vec3 pos;
     glm::vec4 color;
     std::string modelPath;
+    bool isImported;
     Material material;
 
     Model () {}
@@ -49,6 +50,7 @@ public:
         loadModel(path);
         this->modelPath = path;
         this->selected = false;
+        this->isImported = false;
     }
 
     virtual ~Model() = default;

@@ -122,10 +122,12 @@ void Editor::renderScene() {
                 meshShader.setInt("objectId", i);
 //                    meshShader.setInt("material.diffuse", 0);
                 //FIXME (materials): these need to be pulled from the materials on the object, probably loaded into an easier to manipulate structure
-                meshShader.set3DFloat("material.ambient", scene.models[i]->material.ambient.x, scene.models[i]->material.ambient.y, scene.models[i]->material.ambient.z);
-                meshShader.set3DFloat("material.diffuse", scene.models[i]->material.diffuse.x, scene.models[i]->material.diffuse.y, scene.models[i]->material.diffuse.z);
-                meshShader.set3DFloat("material.specular", scene.models[i]->material.specular.x, scene.models[i]->material.specular.y, scene.models[i]->material.specular.z);
-                meshShader.set1DFloat("material.shininess", scene.models[i]->material.shininess);
+                if (!scene.models[i]->isImported) {
+                    meshShader.set3DFloat("material.ambient", scene.models[i]->material.ambient.x, scene.models[i]->material.ambient.y, scene.models[i]->material.ambient.z);
+                    meshShader.set3DFloat("material.diffuse", scene.models[i]->material.diffuse.x, scene.models[i]->material.diffuse.y, scene.models[i]->material.diffuse.z);
+                    meshShader.set3DFloat("material.specular", scene.models[i]->material.specular.x, scene.models[i]->material.specular.y, scene.models[i]->material.specular.z);
+                    meshShader.set1DFloat("material.shininess", scene.models[i]->material.shininess);
+                }
 
                 scene.models[i]->Draw(meshShader);
             }
@@ -192,7 +194,6 @@ void Editor::run() {
         // bind to framebuffer and draw scene as we normally would to color texture
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.framebuffer);
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
 
@@ -209,7 +210,8 @@ void Editor::run() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         screenShader.use();
-        screenShader.setBool("hdr", uiManager.settings.hdr);
+        screenShader.setInt("screenTexture", 0);
+        screenShader.setBool("hdr", &uiManager.settings.hdr);
         screenShader.set1DFloat("exposure", uiManager.settings.exposure);
         glBindVertexArray(screenTexture.quadVAO);
         glBindTexture(GL_TEXTURE_2D, framebuffer.textureColorbuffer);	// use the color attachment texture as the texture of the quad plane

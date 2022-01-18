@@ -61,7 +61,7 @@ vec3 CalcLight(Light light, vec3 normal, vec3 surfacePos, vec3 surfaceToCamera)
    }
 
 //   //ambient
-//   vec3 ambient = light.ambient * surfaceColor.rgb * light.color;
+   vec3 ambient = light.ambient * material.ambient * light.color.xyz;
 //
 //   //diffuse
    float diffuseCoefficient = max(0.0, dot(normal, surfaceToLight));
@@ -75,7 +75,7 @@ vec3 CalcLight(Light light, vec3 normal, vec3 surfacePos, vec3 surfaceToCamera)
 //
 //   //linear color (color before gamma correction)
 //   return ambient + attenuation*(diffuse + specular);
-   vec3 ambient = light.ambient * material.ambient;
+//   vec3 ambient = light.ambient * material.ambient;
    vec3 diffuse = diffuseCoefficient * vec3(texture(material.diffuse, TexCoord));
    vec3 specular = specularCoefficient * material.specular;
    return light.color.xyz * (ambient + attenuation*(diffuse + specular));
