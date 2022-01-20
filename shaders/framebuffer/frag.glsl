@@ -3,14 +3,14 @@ out vec4 FragColor;
 
 in vec2 TexCoords;
 
-uniform sampler2D screenTexture;
+uniform sampler2DMS screenTexture;
 uniform bool hdr;
 uniform float exposure;
 
 void main()
 {
    float gamma = 2.2f;
-   vec3 hdrColor = texture(screenTexture, TexCoords).rgb;
+   vec3 hdrColor = texelFetch(screenTexture, ivec2(TexCoords.xy), 3).rgb;
    if(hdr)
    {
       // exposure
