@@ -18,6 +18,7 @@ Keymap::Keymap() {
     this->keys.insert(std::pair<std::string, int> ("1", 49));
     this->keys.insert(std::pair<std::string, int> ("2", 50));
     this->keys.insert(std::pair<std::string, int> ("3", 51));
+    this->keys.insert(std::pair<std::string, int> ("5", 53));
 }
 
 void Keymap::removeKey(std::string &key)

@@ -7,6 +7,7 @@
 ModalManager::ModalManager() {
     this->fileDialog = ImGui::FileBrowser();
     this->saveDialog = ImGui::FileBrowser(ImGuiFileBrowserFlags_EnterNewFilename | ImGuiFileBrowserFlags_CreateNewDir);
+    this->screenshotDialog = ImGui::FileBrowser(ImGuiFileBrowserFlags_EnterNewFilename | ImGuiFileBrowserFlags_CreateNewDir);
     this->sceneDialog = ImGui::FileBrowser();
     this->textureDialog = ImGui::FileBrowser();
     // (optional) set browser properties
@@ -18,6 +19,9 @@ ModalManager::ModalManager() {
 
     saveDialog.SetTitle("Save Scene File");
     saveDialog.SetTypeFilters({ ".yml" });
+
+    screenshotDialog.SetTitle("Save Screenshot");
+    screenshotDialog.SetTypeFilters({ ".png" });
 
     textureDialog.SetTitle("Select Texture File");
     textureDialog.SetTypeFilters({ ".png", ".jpg" });

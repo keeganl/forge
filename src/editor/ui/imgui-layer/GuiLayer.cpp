@@ -1,9 +1,11 @@
 //
 // Created by keega on 6/5/2021.
 //
-
 #include "GuiLayer.h"
 #include "../../Editor.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../../../../external/stb/stb_image_write.h"
+
 
 static void HelpMarker(const char* desc)
 {
@@ -396,7 +398,7 @@ void GuiLayer::drawDebugEventsPanel() {
     ImGui::End();
 }
 
-void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Scene &scene, Settings &settings) {
+void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Scene &scene, Settings &settings, ModalManager &modalManager) {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     float lastX =  1920.0 / 2.0;
     float lastY =  1080.0 / 2.0;
@@ -451,6 +453,11 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
 
             }
         }
+
+        if (io.KeyShift && ImGui::IsKeyPressed(settings.keymap.keys["5"])) {
+           settings.openScreenshotPopup = true;
+        }
+
 
 
 
@@ -562,9 +569,46 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
             }
         }
         ImGui::EndChild();
+
+        if (settings.openScreenshotPopup) {
+            modalManager.screenshotDialog.Open();
+            settings.openScreenshotPopup = false;
+        }
+
+
+        {
+            modalManager.screenshotDialog.Display();
+
+            if (modalManager.screenshotDialog.HasSelected())
+            {
+                int windowWidth = (int) ImGui::GetWindowWidth();
+                int windowHeight = (int) ImGui::GetWindowHeight();
+                takeScreenshot( modalManager.screenshotDialog.GetSelected().string() + ".png", windowWidth, windowHeight );
+                modalManager.screenshotDialog.ClearSelected();
+
+            }
+        }
     }
 
+
+
+
+
     ImGui::End();
+}
+
+void GuiLayer::takeScreenshot(std::string filename, int &windowWidth, int &windowHeight) {
+    GLsizei nrChannels = 3;
+    GLsizei stride = nrChannels * windowWidth;
+    stride += (stride % 4) ? (4 - stride % 4) : 0;
+    GLsizei bufferSize = stride * windowHeight;
+    std::vector<char> buffer(bufferSize);
+
+    glPixelStorei(GL_PACK_ALIGNMENT, 4);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glReadPixels(0, 0, windowWidth, windowHeight, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
+    stbi_flip_vertically_on_write(true);
+    stbi_write_png(filename.c_str(), windowWidth, windowHeight, nrChannels, buffer.data(), stride);
 }
 
 void GuiLayer::manipulateMesh(Settings &settings, std::shared_ptr<Model> &model, glm::mat4 &camView,

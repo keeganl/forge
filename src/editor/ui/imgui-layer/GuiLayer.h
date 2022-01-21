@@ -32,7 +32,7 @@ namespace GuiLayer {
     void drawModelPropertiesPanel(Scene &scene, std::map<std::string, UITexture> &uiTextures, ModalManager &modalManager);
     void drawCameraPropertiesPanel(Camera &camera);
     void drawDebugEventsPanel();
-    void drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Scene &scene, Settings &settings);
+    void drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse, float &deltaTime, Scene &scene, Settings &settings,  ModalManager &modalManager);
     void drawMenubar(Settings &settings, ModalManager &modalManager, Scene &scene);
     void drawAssetBrowser(Settings &settings, std::map<std::string, UITexture> &uiTextures);
     // TODO: unify this
@@ -40,6 +40,8 @@ namespace GuiLayer {
                         glm::mat4 &camProj,  glm::mat4 &entityModelMatrix);
     void manipulateLight(Settings &settings, std::shared_ptr<Light> &light, glm::mat4 &camView,
                         glm::mat4 &camProj,  glm::mat4 &entityModelMatrix);
+
+    void takeScreenshot(std::string filename, int &windowWidth, int &windowHeight);
 };
 
 

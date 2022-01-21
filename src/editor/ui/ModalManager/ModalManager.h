@@ -13,9 +13,11 @@ class ModalManager {
 public:
     ImGui::FileBrowser fileDialog;
     ImGui::FileBrowser saveDialog;
+    ImGui::FileBrowser screenshotDialog;
     ImGui::FileBrowser sceneDialog;
     ImGui::FileBrowser textureDialog;
     ModalManager();
+
 };
 
 

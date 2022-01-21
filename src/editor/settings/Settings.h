@@ -25,6 +25,7 @@ public:
     bool openScene = false;
     bool saveScene = false;
     bool clearScenePopup = false;
+    bool openScreenshotPopup = false;
     bool openSavePopup = false;
     bool openFilePopup = false;
     bool openSettingsPopup = false;
