@@ -60,22 +60,18 @@ vec3 CalcLight(Light light, vec3 normal, vec3 surfacePos, vec3 surfaceToCamera)
       }
    }
 
-//   //ambient
+   //ambient
    vec3 ambient = light.ambient * material.ambient * light.color.xyz;
-//
-//   //diffuse
+
+   //diffuse
    float diffuseCoefficient = max(0.0, dot(normal, surfaceToLight));
-//   vec3 diffuse = diffuseCoefficient * surfaceColor.rgb * light.color;
-//
-//   //specular
+
+   //specular
    float specularCoefficient = 0.0;
    if(diffuseCoefficient > 0.0)
       specularCoefficient = pow(max(0.0, dot(surfaceToCamera, reflect(-surfaceToLight, normal))), material.shininess);
-//   vec3 specular = specularCoefficient * material.specular * light.color;
-//
-//   //linear color (color before gamma correction)
-//   return ambient + attenuation*(diffuse + specular);
-//   vec3 ambient = light.ambient * material.ambient;
+
+   //linear color (color before gamma correction)
    vec3 diffuse = diffuseCoefficient * vec3(texture(material.diffuse, TexCoord));
    vec3 specular = specularCoefficient * material.specular;
    return light.color.xyz * (ambient + attenuation*(diffuse + specular));
@@ -86,7 +82,6 @@ vec3 CalcLight(Light light, vec3 normal, vec3 surfacePos, vec3 surfaceToCamera)
 void main()
 {
    vec3 norm = normalize(Normal);
-//   vec3 surfacePos = vec3(model * vec4(FragPos, 1));
    vec3 surfaceToCamera = normalize(viewPos - FragPos);
 
    //combine color from all the lights

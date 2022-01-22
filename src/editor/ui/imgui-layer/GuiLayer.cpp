@@ -49,7 +49,7 @@ void GuiLayer::createContext(GLFWwindow *window)
     // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
     // - Read 'docs/FONTS.md' for more instructions and details.
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    io.Fonts->AddFontFromFileTTF(R"(C:\Users\keega\Desktop\school\grad\research\forge\assets\fonts\fira-sans\FiraSans-Regular.ttf)", 11.0f);
+    io.Fonts->AddFontFromFileTTF(R"(C:\Users\keega\Desktop\school\grad\research\forge\assets\fonts\fira-sans\FiraSans-Regular.ttf)", 13.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
@@ -416,6 +416,14 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
         // Because I use the texture from OpenGL, I need to invert the V from the UV.
         ImGui::Image((ImTextureID)textureColorbuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));
 
+        ImGuizmo::SetOrthographic(false);
+        ImGuizmo::SetDrawlist();
+        float windowWidth = (float) ImGui::GetWindowWidth();
+        float windowHeight = (float) ImGui::GetWindowHeight();
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+        glm::mat4 camView = scene.camera.view;
+        glm::mat4 camProj = scene.camera.projection;
+
         // get the selected entity
         // this is bad, fix in scene hierarchy refactor
         for (std::shared_ptr<Model> &model : scene.models) {
@@ -583,7 +591,9 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
             {
                 int windowWidth = (int) ImGui::GetWindowWidth();
                 int windowHeight = (int) ImGui::GetWindowHeight();
-                takeScreenshot( modalManager.screenshotDialog.GetSelected().string() + ".png", windowWidth, windowHeight );
+                ImVec2 windowPos =  ImGui::GetWindowPos();
+                std::cout << windowWidth << " " << windowHeight;
+                takeScreenshot( modalManager.screenshotDialog.GetSelected().string() + ".png", windowPos,windowWidth, windowHeight );
                 modalManager.screenshotDialog.ClearSelected();
 
             }
@@ -597,7 +607,7 @@ void GuiLayer::drawScenePanel(unsigned int &textureColorbuffer, bool &firstMouse
     ImGui::End();
 }
 
-void GuiLayer::takeScreenshot(std::string filename, int &windowWidth, int &windowHeight) {
+void GuiLayer::takeScreenshot(std::string filename, ImVec2 &windowPos, int &windowWidth, int &windowHeight) {
     GLsizei nrChannels = 3;
     GLsizei stride = nrChannels * windowWidth;
     stride += (stride % 4) ? (4 - stride % 4) : 0;
@@ -606,7 +616,8 @@ void GuiLayer::takeScreenshot(std::string filename, int &windowWidth, int &windo
 
     glPixelStorei(GL_PACK_ALIGNMENT, 4);
     glReadBuffer(GL_COLOR_ATTACHMENT0);
-    glReadPixels(0, 0, windowWidth, windowHeight, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
+    // FIXME: window sizes don't line up
+    glReadPixels(windowPos.x, windowPos.y, windowWidth, windowHeight, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
     stbi_flip_vertically_on_write(true);
     stbi_write_png(filename.c_str(), windowWidth, windowHeight, nrChannels, buffer.data(), stride);
 }
@@ -614,11 +625,10 @@ void GuiLayer::takeScreenshot(std::string filename, int &windowWidth, int &windo
 void GuiLayer::manipulateMesh(Settings &settings, std::shared_ptr<Model> &model, glm::mat4 &camView,
                               glm::mat4 &camProj,  glm::mat4 &entityModelMatrix) {
     if (ImGui::IsKeyDown(settings.keymap.keys["t"])) {
-
         ImGuizmo::Manipulate(glm::value_ptr(camView), glm::value_ptr( camProj), ImGuizmo::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(entityModelMatrix));
         if (ImGuizmo::IsUsing()) {
             glm::vec3 manipulatedPos = glm::vec3(entityModelMatrix[3]);
-            if (manipulatedPos.x < settings.farClipping && manipulatedPos.y < settings.farClipping && manipulatedPos.z < settings.nearClipping) {
+            if (manipulatedPos.x < settings.farClipping && manipulatedPos.y < settings.farClipping && manipulatedPos.z < settings.farClipping) {
                 model->pos = glm::vec3(entityModelMatrix[3]);
             }
         }
@@ -633,7 +643,16 @@ void GuiLayer::manipulateMesh(Settings &settings, std::shared_ptr<Model> &model,
             glm::vec4 perspective;
             glm::decompose(entityModelMatrix, scale, rotation, translation, skew, perspective);
             // FIXME: think it's gimbal locked, workaround in UI
-            glm::vec3 euler = glm::eulerAngles(rotation) * 3.14159f / 180.f;
+            glm::vec3 euler = glm::degrees(glm::eulerAngles(rotation));
+            if (euler.x < 0) {
+                euler.x = 180 + abs(euler.x);
+            }
+            if (euler.y < 0) {
+                euler.y = 180 + abs(euler.y);
+            }
+            if (euler.z < 0) {
+                euler.z= 180 + abs(euler.z);
+            }
             std::cout << euler.x << " " << euler.y << " " << euler.z << std::endl;
             model->rotateFloats = euler;
         }
@@ -654,16 +673,18 @@ void GuiLayer::manipulateMesh(Settings &settings, std::shared_ptr<Model> &model,
 
 void GuiLayer::manipulateLight(Settings &settings, std::shared_ptr<Light> &light, glm::mat4 &camView,
                               glm::mat4 &camProj,  glm::mat4 &entityModelMatrix) {
+
     if (ImGui::IsKeyDown(settings.keymap.keys["t"])) {
 
         ImGuizmo::Manipulate(glm::value_ptr(camView), glm::value_ptr( camProj), ImGuizmo::TRANSLATE, ImGuizmo::LOCAL, glm::value_ptr(entityModelMatrix));
         if (ImGuizmo::IsUsing()) {
             glm::vec3 manipulatedPos = glm::vec3(entityModelMatrix[3]);
-            if (manipulatedPos.x < settings.farClipping && manipulatedPos.y < settings.farClipping && manipulatedPos.z < settings.nearClipping) {
+            if (manipulatedPos.x < settings.farClipping && manipulatedPos.y < settings.farClipping && manipulatedPos.z < settings.farClipping) {
                 light->pos = glm::vec3(entityModelMatrix[3]);
             }
         }
     }
+
     if (ImGui::IsKeyDown(settings.keymap.keys["r"])) {
         ImGuizmo::Manipulate(glm::value_ptr(camView), glm::value_ptr( camProj), ImGuizmo::ROTATE, ImGuizmo::LOCAL, glm::value_ptr(entityModelMatrix));
         if (ImGuizmo::IsUsing()) {
@@ -674,8 +695,17 @@ void GuiLayer::manipulateLight(Settings &settings, std::shared_ptr<Light> &light
             glm::vec4 perspective;
             glm::decompose(entityModelMatrix, scale, rotation, translation, skew, perspective);
             // FIXME: think it's gimbal locked, workaround in UI
-            glm::vec3 euler = glm::eulerAngles(rotation) * 3.14159f / 180.f;
+            glm::vec3 euler = glm::degrees(glm::eulerAngles(rotation));
             std::cout << euler.x << " " << euler.y << " " << euler.z << std::endl;
+            if (euler.x < 0) {
+                euler.x = 180 + abs(euler.x);
+            }
+            if (euler.y < 0) {
+                euler.y = 180 + abs(euler.y);
+            }
+            if (euler.z < 0) {
+                euler.z= 180 + abs(euler.z);
+            }
             light->rotateFloats = euler;
         }
     }

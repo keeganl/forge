@@ -41,7 +41,7 @@ namespace GuiLayer {
     void manipulateLight(Settings &settings, std::shared_ptr<Light> &light, glm::mat4 &camView,
                         glm::mat4 &camProj,  glm::mat4 &entityModelMatrix);
 
-    void takeScreenshot(std::string filename, int &windowWidth, int &windowHeight);
+    void takeScreenshot(std::string filename, ImVec2 &windowPos, int &windowWidth, int &windowHeight);
 };
 
 

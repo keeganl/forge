@@ -116,7 +116,7 @@ Scene Serializer::Deserialize(const std::string &filepath) {
     }
     if (lights) {
         for (auto l : lights) {
-            newScene.lights.push_back(std::make_shared<Light>(
+            std::shared_ptr light = std::make_shared<Light>(
                     l["Light"]["Path"].as<std::string>(),
                     false,
                     l["Light"]["ObjectType"].as<std::string>(),
@@ -125,7 +125,14 @@ Scene Serializer::Deserialize(const std::string &filepath) {
                     glm::mat4(1.0f),
                     glm::vec3(l["Light"]["Rotation Axis Values"][0].as<float>(), l["Light"]["Rotation Axis Values"][1].as<float>(), l["Light"]["Rotation Axis Values"][2].as<float>()),
                     glm::vec3(l["Light"]["Axis Scale"][0].as<float>(), l["Light"]["Axis Scale"][1].as<float>(), l["Light"]["Axis Scale"][2].as<float>()),
-                        1.0f));
+                    1.0f);
+           float x = l["Light"]["Color"][0].as<float>();
+           float y = l["Light"]["Color"][1].as<float>();
+           float z = l["Light"]["Color"][2].as<float>();
+           float w = l["Light"]["Color"][3].as<float>();
+           glm::vec4 v = glm::vec4(x,y,z,w);
+           light->color = v;
+           newScene.lights.push_back(light);
         }
     }
     if (camera) {
