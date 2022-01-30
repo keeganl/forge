@@ -67,9 +67,15 @@ vec3 CalcLight(Light light, vec3 normal, vec3 surfacePos, vec3 surfaceToCamera)
    float diffuseCoefficient = max(0.0, dot(normal, surfaceToLight));
 
    //specular
+   // bling-phong
+   vec3 viewDir = normalize(viewPos - FragPos);
    float specularCoefficient = 0.0;
    if(diffuseCoefficient > 0.0)
-      specularCoefficient = pow(max(0.0, dot(surfaceToCamera, reflect(-surfaceToLight, normal))), material.shininess);
+      specularCoefficient = pow(max(0.0, dot(surfaceToCamera, normalize(surfaceToLight + viewDir))), material.shininess);
+//   // phong
+//   float specularCoefficient = 0.0;
+//   if(diffuseCoefficient > 0.0)
+//      specularCoefficient = pow(max(0.0, dot(surfaceToCamera, reflect(-surfaceToLight, normal))), material.shininess);
 
    //linear color (color before gamma correction)
    vec3 diffuse = diffuseCoefficient * vec3(texture(material.diffuse, TexCoord));
