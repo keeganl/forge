@@ -67,7 +67,7 @@ vec3 CalcLight(Light light, vec3 normal, vec3 surfacePos, vec3 surfaceToCamera)
    float diffuseCoefficient = max(0.0, dot(normal, surfaceToLight));
 
    //specular
-   // bling-phong
+   // blinn-phong
    vec3 viewDir = normalize(viewPos - FragPos);
    float specularCoefficient = 0.0;
    if(diffuseCoefficient > 0.0)
